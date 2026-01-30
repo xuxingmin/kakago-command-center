@@ -53,6 +53,57 @@ export type Database = {
           },
         ]
       }
+      inventory_logs: {
+        Row: {
+          created_at: string
+          diff: number
+          id: string
+          material_id: string
+          new_qty: number
+          previous_qty: number
+          reason: string | null
+          store_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          diff?: number
+          id?: string
+          material_id: string
+          new_qty?: number
+          previous_qty?: number
+          reason?: string | null
+          store_id: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          diff?: number
+          id?: string
+          material_id?: string
+          new_qty?: number
+          previous_qty?: number
+          reason?: string | null
+          store_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_logs_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restock_batches: {
         Row: {
           created_at: string

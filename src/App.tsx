@@ -14,6 +14,7 @@ import SupplySKU from "./pages/SupplySKU";
 import SupplyDashboard from "./pages/SupplyDashboard";
 import SupplyRequest from "./pages/SupplyRequest";
 import SupplyPush from "./pages/SupplyPush";
+import SupplyAdjust from "./pages/SupplyAdjust";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -97,6 +98,14 @@ const App = () => (
             element={
               <CommandLayout>
                 <SupplyPush />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/adjust"
+            element={
+              <CommandLayout>
+                <SupplyAdjust />
               </CommandLayout>
             }
           />
