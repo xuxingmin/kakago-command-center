@@ -55,7 +55,7 @@ export function OrderStream() {
   }, [orders, isAutoScroll]);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-3 h-full flex flex-col">
+    <div className="bg-card border border-secondary rounded-lg p-3 h-full flex flex-col">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
