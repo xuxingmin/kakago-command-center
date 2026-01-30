@@ -1,4 +1,5 @@
 import { KPIGrid } from "@/components/dashboard/KPIGrid";
+import { StoreMap } from "@/components/dashboard/StoreMap";
 
 export default function Dashboard() {
   return (
@@ -6,12 +7,15 @@ export default function Dashboard() {
       {/* 顶部经营数据看板 */}
       <KPIGrid />
       
-      {/* 下方区域预留 */}
-      <div className="flex-1 grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-card border border-border rounded-lg p-4 flex items-center justify-center">
-          <span className="text-muted-foreground text-sm">门店分布地图 · 开发中</span>
+      {/* 下方区域 - 65% 地图 + 35% 侧边栏 */}
+      <div className="flex-1 flex gap-4 min-h-0">
+        {/* 左侧地图 65% */}
+        <div className="w-[65%]">
+          <StoreMap />
         </div>
-        <div className="flex flex-col gap-4">
+        
+        {/* 右侧面板 35% */}
+        <div className="w-[35%] flex flex-col gap-4">
           <div className="flex-1 bg-card border border-border rounded-lg p-4 flex items-center justify-center">
             <span className="text-muted-foreground text-sm">实时订单流 · 开发中</span>
           </div>
