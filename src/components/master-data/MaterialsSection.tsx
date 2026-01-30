@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Plus, Pencil, Package, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { BatchUploadButton, FieldMapping } from "./BatchUploadButton";
 
 type Material = {
   id: string;
@@ -40,6 +41,44 @@ const categoryLabels: Record<string, string> = {
   other: "其他",
 };
 
+// Category mapping from Chinese to enum
+const categoryMap: Record<string, Material["category"]> = {
+  "咖啡豆": "bean",
+  "食材": "other",
+  "牛奶": "milk",
+  "乳制品": "milk",
+  "包材": "packaging",
+  "纸杯": "packaging",
+  "PE杯": "packaging",
+  "PP盖": "packaging",
+  "PE盖": "packaging",
+  "PP吸管": "packaging",
+  "纸袋": "packaging",
+  "热敏纸": "packaging",
+  "纸杯套": "packaging",
+  "可撕拉纸浆托": "packaging",
+  "糖浆": "syrup",
+};
+
+const materialFieldMappings: FieldMapping[] = [
+  { dbField: "name", excelField: "产品名称", label: "物料名称", required: true },
+  { 
+    dbField: "category", 
+    excelField: "分类目名称", 
+    label: "分类",
+    transform: (v) => categoryMap[v] || "other"
+  },
+  { dbField: "unit_purchase", excelField: "采购单位", label: "采购单位", required: true },
+  { dbField: "unit_usage", excelField: "消耗单位", label: "消耗单位", required: true },
+  { dbField: "conversion_rate", excelField: "换算率", label: "换算率", required: true, transform: (v) => parseFloat(v) || 1 },
+  { dbField: "cost", excelField: "单位成本", label: "成本", transform: (v) => parseFloat(v) || 0 },
+];
+
+const materialSampleData = [
+  { "产品名称": "未来牧场4.0", "分类目名称": "牛奶", "采购单位": "盒", "消耗单位": "ml", "换算率": "1000", "单位成本": "0.0075" },
+  { "产品名称": "KAKA01拼配", "分类目名称": "咖啡豆", "采购单位": "包", "消耗单位": "g", "换算率": "1000", "单位成本": "0.09" },
+];
+
 interface MaterialsSectionProps {
   materials: Material[];
   queryClient: any;
@@ -51,6 +90,12 @@ export function MaterialsSection({ materials, queryClient }: MaterialsSectionPro
   const filteredMaterials = materials.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleBatchUpload = async (data: any[]) => {
+    const { error } = await supabase.from("sku_materials").insert(data);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["master_materials"] });
+  };
 
   return (
     <Card className="bg-card border-border">
@@ -70,6 +115,13 @@ export function MaterialsSection({ materials, queryClient }: MaterialsSectionPro
                 className="pl-9 w-64 bg-background border-border"
               />
             </div>
+            <BatchUploadButton
+              title="批量导入原物料"
+              description="上传 Excel 文件批量导入原物料数据，支持 .xlsx 和 .csv 格式"
+              fieldMappings={materialFieldMappings}
+              onUpload={handleBatchUpload}
+              sampleData={materialSampleData}
+            />
             <MaterialDialog queryClient={queryClient} existingNames={materials.map(m => m.name)} />
           </div>
         </div>
