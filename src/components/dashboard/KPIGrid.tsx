@@ -1,13 +1,14 @@
-import { TrendingUp, TrendingDown, Coffee, DollarSign, Users, Store, UserPlus, PieChart } from "lucide-react";
+import { TrendingUp, TrendingDown, Coffee, DollarSign, Users, Store, UserPlus, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PieChart as RechartsP, Pie, Cell, ResponsiveContainer } from "recharts";
 
-// SKU 占比数据
+// SKU 占比数据 - 6种SKU
 const skuData = [
-  { name: "美式", value: 35, color: "hsl(270, 100%, 50%)" },
-  { name: "拿铁", value: 28, color: "hsl(270, 70%, 60%)" },
-  { name: "卡布", value: 15, color: "hsl(270, 50%, 40%)" },
-  { name: "其他", value: 22, color: "hsl(240, 3%, 30%)" },
+  { name: "热美式", value: 18 },
+  { name: "冰美式", value: 17 },
+  { name: "热拿铁", value: 22 },
+  { name: "冰拿铁", value: 20 },
+  { name: "卡布奇诺", value: 12 },
+  { name: "澳白", value: 11 },
 ];
 
 interface KPICardProps {
@@ -16,23 +17,21 @@ interface KPICardProps {
   subValue?: string;
   trend?: number;
   icon: React.ElementType;
-  highlight?: boolean;
 }
 
-function KPICard({ title, value, subValue, trend, icon: Icon, highlight }: KPICardProps) {
+function KPICard({ title, value, subValue, trend, icon: Icon }: KPICardProps) {
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 transition-all duration-300",
-        "hover:border-primary/50 hover:shadow-[0_0_20px_hsl(270,100%,50%,0.15)] hover:scale-[1.02]",
-        "group cursor-default"
+        "bg-[#121212] border border-[#333333] rounded-lg p-3 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">{title}</span>
-        <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+        <span className="text-xs text-[#9CA3AF]">{title}</span>
+        <Icon className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
-      <div className={cn("numeric text-xl font-semibold", highlight && "text-primary")}>
+      <div className="font-mono text-xl font-extrabold text-white tabular-nums">
         {value}
       </div>
       {(subValue || trend !== undefined) && (
@@ -44,60 +43,37 @@ function KPICard({ title, value, subValue, trend, icon: Icon, highlight }: KPICa
               ) : (
                 <TrendingDown className="w-3 h-3 text-destructive" />
               )}
-              <span className={cn("text-xs numeric", trend >= 0 ? "text-success" : "text-destructive")}>
+              <span className={cn("text-xs font-mono tabular-nums", trend >= 0 ? "text-success" : "text-destructive")}>
                 {trend >= 0 ? "+" : ""}{trend}%
               </span>
             </>
           )}
-          {subValue && <span className="text-xs text-muted-foreground">{subValue}</span>}
+          {subValue && <span className="text-xs text-[#9CA3AF]">{subValue}</span>}
         </div>
       )}
     </div>
   );
 }
 
-function SKUDonut() {
+function SKUCard() {
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 transition-all duration-300",
-        "hover:border-primary/50 hover:shadow-[0_0_20px_hsl(270,100%,50%,0.15)] hover:scale-[1.02]",
-        "group cursor-default"
+        "bg-[#121212] border border-[#333333] rounded-lg p-3 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default col-span-2"
       )}
     >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-muted-foreground">SKU 占比</span>
-        <PieChart className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-[#9CA3AF]">SKU 占比</span>
+        <Package className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
-      <div className="flex items-center gap-2">
-        <div className="w-12 h-12">
-          <ResponsiveContainer width="100%" height="100%">
-            <RechartsP>
-              <Pie
-                data={skuData}
-                cx="50%"
-                cy="50%"
-                innerRadius={14}
-                outerRadius={22}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {skuData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-            </RechartsP>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex-1 space-y-0.5">
-          {skuData.slice(0, 2).map((item) => (
-            <div key={item.name} className="flex items-center gap-1.5 text-xs">
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
-              <span className="text-muted-foreground">{item.name}</span>
-              <span className="numeric text-foreground ml-auto">{item.value}%</span>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-x-4 gap-y-1">
+        {skuData.map((item) => (
+          <div key={item.name} className="flex items-center justify-between">
+            <span className="text-xs text-[#9CA3AF]">{item.name}</span>
+            <span className="font-mono text-sm font-bold text-white tabular-nums">{item.value}%</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -107,23 +83,22 @@ function RetentionCard() {
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 transition-all duration-300",
-        "hover:border-primary/50 hover:shadow-[0_0_20px_hsl(270,100%,50%,0.15)] hover:scale-[1.02]",
-        "group cursor-default"
+        "bg-[#121212] border border-[#333333] rounded-lg p-3 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">留存/复购</span>
-        <Users className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+        <span className="text-xs text-[#9CA3AF]">留存/复购</span>
+        <Users className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">商家留存</span>
-          <span className="numeric text-sm text-primary">92.4%</span>
+          <span className="text-xs text-[#9CA3AF]">商家留存</span>
+          <span className="font-mono text-sm font-bold text-white tabular-nums">92.4%</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">用户复购</span>
-          <span className="numeric text-sm text-foreground">48.2%</span>
+          <span className="text-xs text-[#9CA3AF]">用户复购</span>
+          <span className="font-mono text-sm font-bold text-white tabular-nums">48.2%</span>
         </div>
       </div>
     </div>
@@ -131,21 +106,28 @@ function RetentionCard() {
 }
 
 export function KPIGrid() {
-  // 模拟数据计算
   const totalRevenue = 128450;
   const merchantShare = totalRevenue * 0.5;
-  const deliveryFee = 2.1 * 12405; // 2.1元 × 出杯量
+  const deliveryFee = 2.1 * 12405;
   const grossProfit = totalRevenue - merchantShare - deliveryFee;
 
   return (
-    <div className="grid grid-cols-7 gap-3">
+    <div className="grid grid-cols-8 gap-3">
+      {/* 1. 商家数 */}
+      <KPICard
+        title="商家数"
+        value="42"
+        subValue="家在线"
+        icon={Store}
+      />
+      {/* 2. 总收入 */}
       <KPICard
         title="总收入"
         value={`¥${totalRevenue.toLocaleString()}`}
         trend={12.5}
         icon={DollarSign}
-        highlight
       />
+      {/* 3. 出杯量 */}
       <KPICard
         title="出杯量"
         value="12,405"
@@ -153,27 +135,24 @@ export function KPIGrid() {
         trend={8.3}
         icon={Coffee}
       />
-      <SKUDonut />
+      {/* 4. 总毛利 */}
       <KPICard
         title="总毛利"
         value={`¥${Math.round(grossProfit).toLocaleString()}`}
         subValue="扣除分成+运费"
         icon={TrendingUp}
-        highlight
       />
-      <KPICard
-        title="商家数"
-        value="42"
-        subValue="家在线"
-        icon={Store}
-      />
+      {/* 5. 留存/复购 */}
       <RetentionCard />
+      {/* 6. 用户增长 */}
       <KPICard
         title="用户增长"
         value="+156"
         trend={23.4}
         icon={UserPlus}
       />
+      {/* 7. SKU占比 - 占2列 */}
+      <SKUCard />
     </div>
   );
 }
