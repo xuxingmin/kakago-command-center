@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Trash2, UserPlus, RotateCcw } from "lucide-react";
+import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +32,18 @@ interface StoreDetailDrawerProps {
   onSave: (store: StoreData) => void;
   onDelete: (id: string) => void;
 }
+
+// 模拟订单数据
+const mockOrders = [
+  { id: "ORD20240115001", time: "2024-01-15 14:32:15", items: "美式咖啡 x2, 拿铁 x1", amount: 78, status: "completed" },
+  { id: "ORD20240115002", time: "2024-01-15 14:28:42", items: "卡布奇诺 x1", amount: 32, status: "completed" },
+  { id: "ORD20240115003", time: "2024-01-15 14:15:33", items: "摩卡 x2, 美式咖啡 x1", amount: 86, status: "completed" },
+  { id: "ORD20240115004", time: "2024-01-15 14:05:21", items: "拿铁 x3", amount: 87, status: "preparing" },
+  { id: "ORD20240115005", time: "2024-01-15 13:58:10", items: "冰美式 x1, 热拿铁 x1", amount: 54, status: "completed" },
+  { id: "ORD20240115006", time: "2024-01-15 13:45:08", items: "抹茶拿铁 x2", amount: 68, status: "completed" },
+  { id: "ORD20240115007", time: "2024-01-15 13:32:55", items: "美式咖啡 x1", amount: 22, status: "completed" },
+  { id: "ORD20240115008", time: "2024-01-15 13:20:30", items: "拿铁 x1, 曲奇 x2", amount: 45, status: "completed" },
+];
 
 // 模拟账号数据
 const mockAccounts = [
@@ -89,8 +101,9 @@ export function StoreDetailDrawer({
         </SheetHeader>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="basic">基础信息</TabsTrigger>
+            <TabsTrigger value="orders">订单统计</TabsTrigger>
             <TabsTrigger value="status">营业状态</TabsTrigger>
             <TabsTrigger value="accounts">账号管理</TabsTrigger>
             <TabsTrigger value="logs">登录日志</TabsTrigger>
@@ -155,7 +168,86 @@ export function StoreDetailDrawer({
             </div>
           </TabsContent>
 
-          {/* Tab B: 营业状态 */}
+          {/* Tab B: 订单统计 */}
+          <TabsContent value="orders" className="space-y-4">
+            {/* 订单 KPI 卡片 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShoppingBag className="w-4 h-4 text-primary" />
+                  <span className="text-xs text-muted-foreground">今日订单</span>
+                </div>
+                <p className="text-2xl font-bold font-mono">156</p>
+                <p className="text-xs text-green-500 mt-1">↑ 12% vs 昨日</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  <span className="text-xs text-muted-foreground">今日营收</span>
+                </div>
+                <p className="text-2xl font-bold font-mono">¥4,280</p>
+                <p className="text-xs text-green-500 mt-1">↑ 8% vs 昨日</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-yellow-500" />
+                  <span className="text-xs text-muted-foreground">平均出餐时间</span>
+                </div>
+                <p className="text-2xl font-bold font-mono">4.2<span className="text-sm">分钟</span></p>
+                <p className="text-xs text-muted-foreground mt-1">目标: 5分钟</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs text-muted-foreground">完成率</span>
+                </div>
+                <p className="text-2xl font-bold font-mono">98.5<span className="text-sm">%</span></p>
+                <p className="text-xs text-green-500 mt-1">优秀</p>
+              </div>
+            </div>
+
+            {/* 订单列表 */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium">实时订单</p>
+                <Button variant="ghost" size="sm" className="text-xs">查看全部</Button>
+              </div>
+              <div className="border border-border rounded-lg overflow-hidden max-h-[320px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="text-xs">订单号</TableHead>
+                      <TableHead className="text-xs">商品</TableHead>
+                      <TableHead className="text-xs">金额</TableHead>
+                      <TableHead className="text-xs">状态</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mockOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-mono text-xs py-2">{order.id.slice(-6)}</TableCell>
+                        <TableCell className="text-xs py-2 max-w-[140px] truncate">{order.items}</TableCell>
+                        <TableCell className="font-mono text-xs py-2">¥{order.amount}</TableCell>
+                        <TableCell className="py-2">
+                          <Badge
+                            className={
+                              order.status === "completed"
+                                ? "bg-green-500/20 text-green-500 text-xs"
+                                : "bg-yellow-500/20 text-yellow-500 text-xs"
+                            }
+                          >
+                            {order.status === "completed" ? "已完成" : "制作中"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab C: 营业状态 */}
           <TabsContent value="status" className="space-y-4">
             <RadioGroup
               value={formData.status}
