@@ -11,6 +11,8 @@ import Merchants from "./pages/Merchants";
 import Supply from "./pages/Supply";
 import SupplyBOM from "./pages/SupplyBOM";
 import SupplySKU from "./pages/SupplySKU";
+import SupplyDashboard from "./pages/SupplyDashboard";
+import SupplyRequest from "./pages/SupplyRequest";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -70,6 +72,22 @@ const App = () => (
             element={
               <CommandLayout>
                 <SupplySKU />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/dashboard"
+            element={
+              <CommandLayout>
+                <SupplyDashboard />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/request"
+            element={
+              <CommandLayout>
+                <SupplyRequest />
               </CommandLayout>
             }
           />
