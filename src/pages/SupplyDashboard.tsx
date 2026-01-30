@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Activity, Coffee } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Coffee, Zap, Eye, AlertTriangle, TrendingUp } from "lucide-react";
 
 type Store = {
   id: string;
@@ -24,15 +27,28 @@ type BomRecipe = {
 type Material = {
   id: string;
   name: string;
+  category: string;
 };
 
-type StoreCapacity = {
+type StoreDoS = {
   store: Store;
-  capacity: number;
+  daysOfSupply: number;
   bottleneckMaterial: string | null;
+  bottleneckMaterialId: string | null;
+  status: "meltdown" | "warning" | "safe";
 };
+
+// Traffic light thresholds
+const MELTDOWN_THRESHOLD = 2.0;
+const WARNING_THRESHOLD = 4.0;
+
+// Simulated daily average usage per material (in real app, calculate from sales data)
+const SIMULATED_DAILY_USAGE: Record<string, number> = {};
 
 export default function SupplyDashboard() {
+  const navigate = useNavigate();
+  const [statusFilter, setStatusFilter] = useState<"all" | "meltdown" | "warning" | "safe">("all");
+
   // Fetch stores
   const { data: stores = [] } = useQuery({
     queryKey: ["stores_active"],
@@ -57,7 +73,7 @@ export default function SupplyDashboard() {
     },
   });
 
-  // Fetch BOM recipes to calculate average usage
+  // Fetch BOM recipes to estimate daily usage
   const { data: bomRecipes = [] } = useQuery({
     queryKey: ["bom_recipes_all"],
     queryFn: async () => {
@@ -67,18 +83,25 @@ export default function SupplyDashboard() {
     },
   });
 
-  // Fetch materials for names
+  // Fetch materials for names (only core categories: bean, milk, packaging)
   const { data: materials = [] } = useQuery({
-    queryKey: ["sku_materials_names"],
+    queryKey: ["sku_materials_core"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("sku_materials").select("id, name");
+      const { data, error } = await supabase
+        .from("sku_materials")
+        .select("id, name, category")
+        .in("category", ["bean", "milk", "packaging"]);
       if (error) throw error;
       return data as Material[];
     },
   });
 
-  // Calculate average usage per cup for each material
-  const avgUsagePerMaterial = bomRecipes.reduce((acc, recipe) => {
+  const coreMatIds = new Set(materials.map((m) => m.id));
+  const getMaterialName = (id: string) => materials.find((m) => m.id === id)?.name || "未知";
+
+  // Calculate average usage per material from BOM (cups/day simulation)
+  // In production, this would come from actual sales data
+  const avgDailyUsagePerMaterial = bomRecipes.reduce((acc, recipe) => {
     if (!acc[recipe.material_id]) {
       acc[recipe.material_id] = { total: 0, count: 0 };
     }
@@ -87,62 +110,120 @@ export default function SupplyDashboard() {
     return acc;
   }, {} as Record<string, { total: number; count: number }>);
 
-  const getMaterialName = (id: string) => materials.find((m) => m.id === id)?.name || "未知";
+  // Estimate daily usage: avg_usage_per_cup * estimated_cups_per_day (e.g., 100 cups)
+  const ESTIMATED_DAILY_CUPS = 100;
 
-  // Calculate capacity for each store
-  const storeCapacities: StoreCapacity[] = stores.map((store) => {
-    const storeInventory = inventory.filter((inv) => inv.store_id === store.id);
-    
+  // Calculate DoS for each store
+  const storeDoSList: StoreDoS[] = stores.map((store) => {
+    const storeInventory = inventory.filter(
+      (inv) => inv.store_id === store.id && coreMatIds.has(inv.material_id)
+    );
+
     if (storeInventory.length === 0) {
-      return { store, capacity: 0, bottleneckMaterial: null };
+      return {
+        store,
+        daysOfSupply: 0,
+        bottleneckMaterial: null,
+        bottleneckMaterialId: null,
+        status: "meltdown" as const,
+      };
     }
 
-    let minCapacity = Infinity;
+    let minDoS = Infinity;
     let bottleneckMaterialId: string | null = null;
 
     storeInventory.forEach((inv) => {
-      const avgUsage = avgUsagePerMaterial[inv.material_id];
+      const avgUsage = avgDailyUsagePerMaterial[inv.material_id];
       if (avgUsage && avgUsage.total > 0) {
+        // Daily usage = (avg per cup) * (estimated daily cups)
         const avgPerCup = avgUsage.total / avgUsage.count;
-        const capacity = Math.floor(inv.current_quantity / avgPerCup);
-        if (capacity < minCapacity) {
-          minCapacity = capacity;
+        const dailyUsage = avgPerCup * ESTIMATED_DAILY_CUPS;
+        const dos = dailyUsage > 0 ? inv.current_quantity / dailyUsage : Infinity;
+        
+        if (dos < minDoS) {
+          minDoS = dos;
           bottleneckMaterialId = inv.material_id;
         }
       }
     });
 
+    const finalDoS = minDoS === Infinity ? 0 : minDoS;
+    let status: "meltdown" | "warning" | "safe" = "safe";
+    if (finalDoS < MELTDOWN_THRESHOLD) status = "meltdown";
+    else if (finalDoS < WARNING_THRESHOLD) status = "warning";
+
     return {
       store,
-      capacity: minCapacity === Infinity ? 0 : minCapacity,
+      daysOfSupply: finalDoS,
       bottleneckMaterial: bottleneckMaterialId ? getMaterialName(bottleneckMaterialId) : null,
+      bottleneckMaterialId,
+      status,
     };
   });
 
-  // Sort by capacity (lowest first for visibility of problems)
-  const sortedCapacities = [...storeCapacities].sort((a, b) => a.capacity - b.capacity);
+  // Sort: Red -> Yellow -> Green, then by DoS ascending within each group
+  const statusOrder = { meltdown: 0, warning: 1, safe: 2 };
+  const sortedStores = [...storeDoSList].sort((a, b) => {
+    if (statusOrder[a.status] !== statusOrder[b.status]) {
+      return statusOrder[a.status] - statusOrder[b.status];
+    }
+    return a.daysOfSupply - b.daysOfSupply;
+  });
 
-  const totalCapacity = storeCapacities.reduce((sum, s) => sum + s.capacity, 0);
-  const warningStores = storeCapacities.filter((s) => s.capacity < 50).length;
+  // Filter by status
+  const filteredStores = statusFilter === "all" 
+    ? sortedStores 
+    : sortedStores.filter((s) => s.status === statusFilter);
+
+  // Stats
+  const meltdownCount = storeDoSList.filter((s) => s.status === "meltdown").length;
+  const warningCount = storeDoSList.filter((s) => s.status === "warning").length;
+  const safeCount = storeDoSList.filter((s) => s.status === "safe").length;
+  const avgDoS = storeDoSList.length > 0
+    ? storeDoSList.reduce((sum, s) => sum + s.daysOfSupply, 0) / storeDoSList.length
+    : 0;
+
+  const handleEmergencyPush = (storeId: string) => {
+    navigate(`/supply/push?store=${storeId}&urgent=true`);
+  };
+
+  const handleViewPush = () => {
+    navigate("/supply/push");
+  };
 
   return (
     <div className="h-full space-y-4">
-      {/* Header Stats */}
+      {/* Header Stats Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Activity className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">全城产能监控</h1>
         </div>
-        <div className="flex gap-4">
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">总产能</p>
-            <p className="text-2xl font-bold font-mono text-primary">{totalCapacity.toLocaleString()}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">预警门店</p>
-            <p className={`text-2xl font-bold font-mono ${warningStores > 0 ? "text-destructive" : "text-success"}`}>
-              {warningStores}
-            </p>
+
+        {/* Clickable Filter Stats */}
+        <div className="flex gap-2">
+          <Button
+            variant={statusFilter === "meltdown" ? "destructive" : "ghost"}
+            size="sm"
+            onClick={() => setStatusFilter(statusFilter === "meltdown" ? "all" : "meltdown")}
+            className="gap-2"
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            熔断门店: {meltdownCount} 家
+          </Button>
+          <Button
+            variant={statusFilter === "warning" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setStatusFilter(statusFilter === "warning" ? "all" : "warning")}
+            className={`gap-2 ${statusFilter === "warning" ? "bg-yellow-600 hover:bg-yellow-700" : ""}`}
+          >
+            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+            备货门店: {warningCount} 家
+          </Button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50">
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">全网平均周转:</span>
+            <span className="font-mono font-bold text-foreground">{avgDoS.toFixed(1)} 天</span>
           </div>
         </div>
       </div>
@@ -157,60 +238,105 @@ export default function SupplyDashboard() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {sortedCapacities.map(({ store, capacity, bottleneckMaterial }) => {
-            const isWarning = capacity < 50;
-            const isCritical = capacity < 20;
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredStores.map(({ store, daysOfSupply, bottleneckMaterial, status }) => (
+            <Card
+              key={store.id}
+              className={`relative overflow-hidden transition-all duration-300 ${
+                status === "meltdown"
+                  ? "bg-red-950/80 border-red-500/50 animate-pulse"
+                  : status === "warning"
+                  ? "bg-yellow-950/60 border-yellow-500/30"
+                  : "bg-emerald-950/30 border-emerald-500/20"
+              }`}
+            >
+              {/* Status indicator glow */}
+              {status === "meltdown" && (
+                <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent pointer-events-none" />
+              )}
 
-            return (
-              <Card
-                key={store.id}
-                className={`bg-card border-border transition-all duration-200 ${
-                  isCritical
-                    ? "border-destructive/50 bg-destructive/5"
-                    : isWarning
-                    ? "border-warning/50 bg-warning/5"
-                    : "hover:border-primary/30"
-                }`}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-foreground flex items-center justify-between">
-                    {store.name}
-                    {isWarning && (
-                      <AlertTriangle className={`w-4 h-4 ${isCritical ? "text-destructive" : "text-warning"}`} />
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-center">
-                    <p
-                      className={`text-4xl font-bold font-mono ${
-                        isCritical ? "text-destructive" : isWarning ? "text-warning" : "text-foreground"
-                      }`}
-                    >
-                      {capacity}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">剩余产能 (杯)</p>
-                  </div>
-
-                  {isWarning && bottleneckMaterial && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <Badge
-                        variant="outline"
-                        className={`w-full justify-center text-xs ${
-                          isCritical ? "border-destructive/50 text-destructive" : "border-warning/50 text-warning"
-                        }`}
-                      >
-                        短板: {bottleneckMaterial}
-                      </Badge>
-                    </div>
+              <CardContent className="p-4 space-y-3">
+                {/* Store Name Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-foreground truncate">{store.name}</h3>
+                  {status === "meltdown" && (
+                    <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+
+                {/* Core DoS Number */}
+                <div className="text-center py-2">
+                  <span
+                    className={`text-5xl font-bold font-mono ${
+                      status === "meltdown"
+                        ? "text-red-400"
+                        : status === "warning"
+                        ? "text-yellow-400"
+                        : "text-emerald-400"
+                    }`}
+                  >
+                    {daysOfSupply.toFixed(1)}
+                  </span>
+                  <span className="text-sm text-muted-foreground ml-1">天</span>
+                </div>
+
+                {/* Bottleneck Badge */}
+                {(status === "meltdown" || status === "warning") && bottleneckMaterial && (
+                  <Badge
+                    variant="outline"
+                    className={`w-full justify-center text-xs ${
+                      status === "meltdown"
+                        ? "border-red-500/50 text-red-300 bg-red-500/10"
+                        : "border-yellow-500/50 text-yellow-300 bg-yellow-500/10"
+                    }`}
+                  >
+                    ⚠️ 缺: {bottleneckMaterial}
+                  </Badge>
+                )}
+
+                {/* Action Buttons */}
+                {status === "meltdown" && (
+                  <Button
+                    size="sm"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => handleEmergencyPush(store.id)}
+                  >
+                    <Zap className="w-4 h-4 mr-1" />
+                    紧急调拨
+                  </Button>
+                )}
+                {status === "warning" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/10"
+                    onClick={handleViewPush}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    查看补货
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-6 pt-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-red-500" />
+          <span>熔断区 (&lt;2天)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-yellow-500" />
+          <span>备货区 (2-4天)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span>安全区 (≥4天)</span>
+        </div>
+      </div>
     </div>
   );
 }
