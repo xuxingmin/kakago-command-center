@@ -3,7 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CommandLayout } from "@/components/layout/CommandLayout";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Users from "./pages/Users";
+import Merchants from "./pages/Merchants";
+import Supply from "./pages/Supply";
+import Finance from "./pages/Finance";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,7 +23,54 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route
+            path="/dashboard"
+            element={
+              <CommandLayout>
+                <Dashboard />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <CommandLayout>
+                <Users />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/merchants"
+            element={
+              <CommandLayout>
+                <Merchants />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply"
+            element={
+              <CommandLayout>
+                <Supply />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/finance"
+            element={
+              <CommandLayout>
+                <Finance />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <CommandLayout>
+                <SettingsPage />
+              </CommandLayout>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
