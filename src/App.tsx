@@ -13,6 +13,7 @@ import SupplyBOM from "./pages/SupplyBOM";
 import SupplySKU from "./pages/SupplySKU";
 import SupplyDashboard from "./pages/SupplyDashboard";
 import SupplyRequest from "./pages/SupplyRequest";
+import SupplyPush from "./pages/SupplyPush";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -88,6 +89,14 @@ const App = () => (
             element={
               <CommandLayout>
                 <SupplyRequest />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/push"
+            element={
+              <CommandLayout>
+                <SupplyPush />
               </CommandLayout>
             }
           />
