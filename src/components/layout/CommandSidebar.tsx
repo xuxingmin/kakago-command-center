@@ -6,7 +6,6 @@ import {
   Box,
   Wallet,
   Settings,
-  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -22,7 +21,6 @@ const menuItems = [
   { path: "/merchants", label: "商家中心", icon: Store },
   { path: "/supply", label: "供应链", icon: Box },
   { path: "/finance", label: "财务", icon: Wallet },
-  { path: "/admin/master-data", label: "主数据", icon: Crown },
   { path: "/settings", label: "设置", icon: Settings },
 ];
 
