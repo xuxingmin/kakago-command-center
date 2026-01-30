@@ -7,23 +7,23 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 
-// 模拟门店数据（基于北京区域坐标）
+// 模拟门店数据（基于合肥主城区坐标）
 const storesData = [
-  { id: 1, name: "朝阳大悦城店", x: 72, y: 35, orders: 128, hours: "07:00-22:00", status: "营业中" },
-  { id: 2, name: "国贸CBD店", x: 68, y: 48, orders: 95, hours: "06:30-23:00", status: "营业中" },
-  { id: 3, name: "三里屯店", x: 65, y: 42, orders: 112, hours: "08:00-24:00", status: "营业中" },
-  { id: 4, name: "望京SOHO店", x: 78, y: 28, orders: 67, hours: "07:00-21:00", status: "营业中" },
-  { id: 5, name: "中关村店", x: 38, y: 32, orders: 45, hours: "07:30-22:00", status: "营业中" },
-  { id: 6, name: "西单大悦城店", x: 48, y: 52, orders: 89, hours: "09:00-22:00", status: "营业中" },
-  { id: 7, name: "王府井店", x: 55, y: 48, orders: 156, hours: "08:00-22:00", status: "营业中" },
-  { id: 8, name: "亦庄店", x: 75, y: 78, orders: 23, hours: "08:00-20:00", status: "营业中" },
-  { id: 9, name: "通州万达店", x: 88, y: 55, orders: 34, hours: "09:00-21:00", status: "营业中" },
-  { id: 10, name: "大兴机场店", x: 45, y: 88, orders: 78, hours: "05:00-24:00", status: "营业中" },
-  { id: 11, name: "回龙观店", x: 45, y: 15, orders: 28, hours: "07:00-21:00", status: "闭店" },
-  { id: 12, name: "昌平店", x: 52, y: 8, orders: 15, hours: "08:00-20:00", status: "闭店" },
-  { id: 13, name: "顺义店", x: 82, y: 18, orders: 42, hours: "07:00-21:00", status: "营业中" },
-  { id: 14, name: "海淀黄庄店", x: 35, y: 40, orders: 58, hours: "07:00-22:00", status: "营业中" },
-  { id: 15, name: "五道口店", x: 42, y: 28, orders: 103, hours: "07:00-23:00", status: "营业中" },
+  { id: 1, name: "淮河路步行街店", x: 48, y: 42, orders: 156, hours: "07:00-22:00", status: "营业中" },
+  { id: 2, name: "万达广场店", x: 62, y: 38, orders: 128, hours: "08:00-22:00", status: "营业中" },
+  { id: 3, name: "银泰中心店", x: 55, y: 48, orders: 112, hours: "08:00-23:00", status: "营业中" },
+  { id: 4, name: "合肥南站店", x: 58, y: 72, orders: 103, hours: "06:00-23:00", status: "营业中" },
+  { id: 5, name: "政务区店", x: 35, y: 55, orders: 95, hours: "07:30-22:00", status: "营业中" },
+  { id: 6, name: "天鹅湖万达店", x: 32, y: 62, orders: 89, hours: "09:00-22:00", status: "营业中" },
+  { id: 7, name: "滨湖银泰店", x: 45, y: 82, orders: 78, hours: "09:00-21:00", status: "营业中" },
+  { id: 8, name: "包河万达店", x: 55, y: 65, orders: 67, hours: "08:00-21:00", status: "营业中" },
+  { id: 9, name: "蜀山万象城店", x: 28, y: 45, orders: 58, hours: "09:00-22:00", status: "营业中" },
+  { id: 10, name: "中科大店", x: 22, y: 52, orders: 45, hours: "07:00-22:00", status: "营业中" },
+  { id: 11, name: "庐阳万达店", x: 42, y: 28, orders: 42, hours: "08:00-21:00", status: "营业中" },
+  { id: 12, name: "瑶海万达店", x: 72, y: 35, orders: 34, hours: "08:00-20:00", status: "营业中" },
+  { id: 13, name: "新站高铁店", x: 78, y: 22, orders: 28, hours: "06:30-22:00", status: "营业中" },
+  { id: 14, name: "经开区店", x: 68, y: 75, orders: 23, hours: "08:00-20:00", status: "闭店" },
+  { id: 15, name: "肥西万达店", x: 18, y: 68, orders: 15, hours: "09:00-20:00", status: "闭店" },
 ];
 
 function getNodeColor(orders: number): { bg: string; glow: string; label: string } {
@@ -120,33 +120,33 @@ export function StoreMap() {
   const lowLoadCount = storesData.filter(s => s.orders < 30).length;
 
   return (
-    <div className="bg-card border border-secondary rounded-lg p-4 h-full flex flex-col">
+    <div className="bg-[#121212] border border-[#333333] rounded-lg p-3 h-full flex flex-col">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">门店分布地图</span>
-          <span className="text-xs text-muted-foreground">· 北京区域</span>
+          <span className="text-xs text-[#9CA3AF]">· 合肥主城区</span>
         </div>
         {/* 图例 */}
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-muted-foreground">高负载 ({highLoadCount})</span>
+            <span className="text-[#9CA3AF]">高负载({highLoadCount})</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-yellow-500" />
-            <span className="text-muted-foreground">正常 ({normalCount})</span>
+            <span className="text-[#9CA3AF]">正常({normalCount})</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-zinc-500" />
-            <span className="text-muted-foreground">低负载 ({lowLoadCount})</span>
+            <span className="text-[#9CA3AF]">低负载({lowLoadCount})</span>
           </div>
         </div>
       </div>
 
       {/* 地图区域 */}
-      <div className="flex-1 relative bg-background rounded-lg border border-primary/20 overflow-hidden">
+      <div className="flex-1 relative bg-black rounded-lg border border-[#333333] overflow-hidden">
         {/* 网格背景 */}
         <div 
           className="absolute inset-0 opacity-10"
@@ -159,49 +159,73 @@ export function StoreMap() {
           }}
         />
         
-        {/* 简化的北京轮廓 SVG */}
+        {/* 合肥主城区轮廓 SVG */}
         <svg
           viewBox="0 0 100 100"
           className="absolute inset-0 w-full h-full"
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* 外环区域轮廓 */}
+          {/* 巢湖区域 (右下角) */}
+          <ellipse
+            cx="70"
+            cy="85"
+            rx="25"
+            ry="12"
+            fill="hsl(220, 60%, 20%)"
+            fillOpacity="0.3"
+            stroke="hsl(220, 60%, 40%)"
+            strokeWidth="0.3"
+          />
+          <text x="70" y="87" fontSize="3" fill="hsl(220, 60%, 50%)" textAnchor="middle" opacity="0.5">巢湖</text>
+          
+          {/* 外环 - 合肥市区边界 */}
           <path
-            d="M30 5 L55 3 L80 8 L92 25 L95 50 L90 75 L70 92 L45 95 L20 85 L8 60 L10 35 L20 15 Z"
+            d="M15 30 L40 15 L70 12 L88 25 L92 55 L85 80 L60 92 L30 88 L12 70 L8 45 Z"
             fill="none"
             stroke="hsl(270, 100%, 50%)"
             strokeWidth="0.3"
-            opacity="0.4"
+            opacity="0.3"
           />
-          {/* 五环区域 */}
+          
+          {/* 三环区域 */}
           <path
-            d="M40 25 L60 23 L75 30 L80 50 L75 70 L55 78 L35 75 L28 55 L30 35 Z"
+            d="M25 35 L45 25 L68 28 L78 45 L75 65 L58 78 L35 75 L22 58 L20 42 Z"
             fill="hsl(270, 100%, 50%)"
-            fillOpacity="0.05"
+            fillOpacity="0.04"
+            stroke="hsl(270, 100%, 50%)"
+            strokeWidth="0.4"
+            opacity="0.5"
+          />
+          
+          {/* 二环区域 */}
+          <path
+            d="M32 40 L48 32 L62 35 L68 48 L65 60 L52 68 L38 65 L30 52 Z"
+            fill="hsl(270, 100%, 50%)"
+            fillOpacity="0.06"
             stroke="hsl(270, 100%, 50%)"
             strokeWidth="0.5"
             opacity="0.6"
           />
-          {/* 三环区域 */}
-          <path
-            d="M45 35 L58 33 L68 40 L70 52 L65 62 L52 66 L42 62 L38 50 L40 40 Z"
+          
+          {/* 一环核心 - 老城区 */}
+          <ellipse
+            cx="48"
+            cy="48"
+            rx="10"
+            ry="8"
             fill="hsl(270, 100%, 50%)"
-            fillOpacity="0.08"
+            fillOpacity="0.1"
             stroke="hsl(270, 100%, 50%)"
             strokeWidth="0.6"
             opacity="0.7"
           />
-          {/* 二环核心 */}
-          <ellipse
-            cx="52"
-            cy="48"
-            rx="8"
-            ry="7"
-            fill="hsl(270, 100%, 50%)"
-            fillOpacity="0.12"
-            stroke="hsl(270, 100%, 50%)"
-            strokeWidth="0.8"
-          />
+          
+          {/* 区域标注 */}
+          <text x="48" y="42" fontSize="2.5" fill="#9CA3AF" textAnchor="middle" opacity="0.6">庐阳区</text>
+          <text x="68" y="42" fontSize="2.5" fill="#9CA3AF" textAnchor="middle" opacity="0.6">瑶海区</text>
+          <text x="28" y="52" fontSize="2.5" fill="#9CA3AF" textAnchor="middle" opacity="0.6">蜀山区</text>
+          <text x="55" y="62" fontSize="2.5" fill="#9CA3AF" textAnchor="middle" opacity="0.6">包河区</text>
+          <text x="45" y="80" fontSize="2.5" fill="#9CA3AF" textAnchor="middle" opacity="0.6">滨湖新区</text>
         </svg>
 
         {/* 门店节点 */}
@@ -210,7 +234,7 @@ export function StoreMap() {
         ))}
 
         {/* 数据更新时间戳 */}
-        <div className="absolute bottom-2 right-2 text-[10px] text-muted-foreground/50">
+        <div className="absolute bottom-1 right-2 text-[10px] text-[#9CA3AF]/50">
           数据更新: {new Date().toLocaleTimeString('zh-CN')}
         </div>
       </div>
