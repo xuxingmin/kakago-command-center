@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Box, FileText, BarChart3, ClipboardList, Truck, Package, ShoppingCart } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { InventorySummaryCards } from "@/components/supply/InventorySummaryCards";
 
 const supplyModules = [
   {
@@ -48,6 +49,9 @@ export default function Supply() {
         <Box className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">供应链管理</h1>
       </div>
+
+      {/* 库存汇总卡片 */}
+      <InventorySummaryCards />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {supplyModules.map((module) => (
