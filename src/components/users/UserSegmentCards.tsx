@@ -76,7 +76,8 @@ export function UserSegmentCards() {
 
   return (
     <>
-      <div className="grid grid-cols-4 gap-3 h-full">
+      {/* 2x2 网格布局 */}
+      <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
         {segmentData.map((item) => {
           const Icon = item.icon;
           const percentage = ((item.value / total) * 100).toFixed(1);
@@ -86,56 +87,56 @@ export function UserSegmentCards() {
             <div 
               key={item.id} 
               className={cn(
-                "relative flex items-center justify-between px-4 py-3 rounded-xl",
+                "relative flex flex-col justify-between p-3 rounded-xl",
                 "bg-[#121212] border border-[#2A2A2E] hover:border-[#3A3A3E]",
-                "transition-all duration-200"
+                "transition-all duration-200 overflow-hidden"
               )}
             >
-              {/* 营销中标记 */}
+              {/* 营销中标记 - 右上角小标签 */}
               {isMarketing && (
-                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7F00FF]/20 border border-[#7F00FF]/50 z-10">
-                  <Megaphone className="w-3 h-3 text-[#7F00FF] animate-pulse" />
-                  <span className="text-[9px] text-[#7F00FF] font-semibold">营销中</span>
+                <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7F00FF]/20 border border-[#7F00FF]/50">
+                  <Megaphone className="w-2.5 h-2.5 text-[#7F00FF] animate-pulse" />
+                  <span className="text-[8px] text-[#7F00FF] font-semibold">营销中</span>
                 </div>
               )}
               
-              {/* 左侧：图标 + 信息 */}
-              <div className="flex items-center gap-3">
+              {/* 上部：图标 + 信息 */}
+              <div className="flex items-start gap-2">
                 <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: `${item.color}18` }}
                 >
-                  <Icon className="w-5 h-5" style={{ color: item.color }} />
+                  <Icon className="w-4 h-4" style={{ color: item.color }} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{item.name}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-white truncate">{item.name}</span>
                     <span 
-                      className="font-mono text-xs font-bold tabular-nums px-1.5 py-0.5 rounded"
+                      className="font-mono text-[10px] font-bold tabular-nums px-1 py-0.5 rounded flex-shrink-0"
                       style={{ color: item.color, backgroundColor: `${item.color}15` }}
                     >
                       {percentage}%
                     </span>
                   </div>
-                  <div className="font-mono text-lg font-black text-white tabular-nums leading-tight">
+                  <div className="font-mono text-base font-black text-white tabular-nums leading-tight">
                     {item.value.toLocaleString()}
-                    <span className="text-xs text-[#6B7280] font-normal ml-1">人</span>
+                    <span className="text-[10px] text-[#6B7280] font-normal ml-0.5">人</span>
                   </div>
                 </div>
               </div>
 
-              {/* 右侧：投券按钮 */}
+              {/* 下部：投券按钮 */}
               <Button
                 size="sm"
                 onClick={() => handleCouponClick(item)}
                 className={cn(
-                  "h-9 px-4 text-xs gap-2 font-semibold flex-shrink-0",
+                  "w-full h-7 text-[10px] gap-1.5 font-semibold mt-2",
                   "bg-[#7F00FF] hover:bg-[#6B00DB] text-white",
                   "shadow-lg shadow-[#7F00FF]/20 hover:shadow-[#7F00FF]/30",
                   "transition-all duration-200"
                 )}
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-3 h-3" />
                 一键投券
               </Button>
             </div>
