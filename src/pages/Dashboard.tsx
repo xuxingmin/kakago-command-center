@@ -7,32 +7,31 @@ import { TicketList } from "@/components/dashboard/TicketList";
 
 export default function Dashboard() {
   return (
-    <div className="h-full flex flex-col gap-3">
-      {/* 顶部经营数据看板 */}
-      <KPIGrid />
+    <div className="h-full flex flex-col gap-2">
+      {/* 第一行: 顶部KPI - 紧凑 */}
+      <div className="flex-shrink-0">
+        <KPIGrid />
+      </div>
       
-      {/* 中间区域 - 地图 + 实时订单流 */}
-      <div className="flex gap-3 flex-1 min-h-0">
-        {/* 左侧地图 */}
-        <div className="w-[62%] h-full">
+      {/* 第二行: 地图 + 订单流 - 最大化 */}
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[65%] h-full">
           <StoreMap />
         </div>
-        
-        {/* 右侧订单流 */}
-        <div className="w-[38%] h-full">
+        <div className="w-[35%] h-full">
           <OrderStream />
         </div>
       </div>
 
-      {/* 底部区域 - 事件预警 | 客户满意度 | 投诉工单 */}
-      <div className="flex gap-3 h-[200px] flex-shrink-0">
+      {/* 第三行: 预警模块 - 紧凑 */}
+      <div className="flex gap-2 h-[160px] flex-shrink-0">
         <div className="w-[45%] h-full">
           <ExceptionMonitor />
         </div>
-        <div className="w-[27%] h-full">
+        <div className="w-[28%] h-full">
           <CustomerSatisfaction />
         </div>
-        <div className="w-[28%] h-full">
+        <div className="w-[27%] h-full">
           <TicketList />
         </div>
       </div>
