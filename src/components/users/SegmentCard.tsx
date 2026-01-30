@@ -35,53 +35,55 @@ export function SegmentCard({ segment, total }: SegmentCardProps) {
     <>
       <div 
         className={cn(
-          "relative flex flex-col justify-between p-4 rounded-xl h-full",
+          "relative flex flex-col p-3 rounded-xl h-full",
           "bg-[#121212] border border-[#2A2A2E] hover:border-[#3A3A3E]",
           "transition-all duration-200 overflow-hidden"
         )}
       >
         {isMarketing && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7F00FF]/20 border border-[#7F00FF]/50">
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7F00FF]/20 border border-[#7F00FF]/50">
             <Megaphone className="w-2.5 h-2.5 text-[#7F00FF] animate-pulse" />
             <span className="text-[8px] text-[#7F00FF] font-semibold">营销中</span>
           </div>
         )}
         
-        <div className="flex items-start gap-3">
+        {/* 顶部：图标+名称+百分比 - 横向排列 */}
+        <div className="flex items-center gap-2 mb-2">
           <div 
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: `${segment.color}18` }}
           >
-            <Icon className="w-5 h-5" style={{ color: segment.color }} />
+            <Icon className="w-4 h-4" style={{ color: segment.color }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">{segment.name}</span>
-              <span 
-                className="font-mono text-xs font-bold tabular-nums px-1.5 py-0.5 rounded"
-                style={{ color: segment.color, backgroundColor: `${segment.color}15` }}
-              >
-                {percentage}%
-              </span>
-            </div>
-            <div className="font-mono text-2xl font-black text-white tabular-nums leading-tight mt-1">
-              {segment.value.toLocaleString()}
-              <span className="text-xs text-[#6B7280] font-normal ml-1">人</span>
-            </div>
+          <span className="text-sm font-semibold text-white whitespace-nowrap">{segment.name}</span>
+          <span 
+            className="font-mono text-xs font-bold tabular-nums px-1.5 py-0.5 rounded ml-auto flex-shrink-0"
+            style={{ color: segment.color, backgroundColor: `${segment.color}15` }}
+          >
+            {percentage}%
+          </span>
+        </div>
+
+        {/* 中间：数值 */}
+        <div className="flex-1 flex items-center">
+          <div className="font-mono text-2xl font-black text-white tabular-nums">
+            {segment.value.toLocaleString()}
+            <span className="text-sm text-[#6B7280] font-normal ml-1">人</span>
           </div>
         </div>
 
+        {/* 底部：按钮 */}
         <Button
           size="sm"
           onClick={() => setDialogOpen(true)}
           className={cn(
-            "w-full h-8 text-xs gap-1.5 font-semibold mt-3",
+            "w-full h-7 text-xs gap-1 font-semibold mt-2",
             "bg-[#7F00FF] hover:bg-[#6B00DB] text-white",
-            "shadow-lg shadow-[#7F00FF]/20 hover:shadow-[#7F00FF]/30",
+            "shadow-lg shadow-[#7F00FF]/20",
             "transition-all duration-200"
           )}
         >
-          <Send className="w-3.5 h-3.5" />
+          <Send className="w-3 h-3" />
           一键投券
         </Button>
       </div>
