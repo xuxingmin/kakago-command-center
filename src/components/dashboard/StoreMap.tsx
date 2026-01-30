@@ -120,7 +120,7 @@ export function StoreMap() {
   const lowLoadCount = storesData.filter(s => s.orders < 30).length;
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4 h-[500px] flex flex-col">
+    <div className="bg-card border border-secondary rounded-lg p-4 h-full flex flex-col">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
