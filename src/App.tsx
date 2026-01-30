@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Merchants from "./pages/Merchants";
 import Supply from "./pages/Supply";
+import SupplyBOM from "./pages/SupplyBOM";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -52,6 +53,14 @@ const App = () => (
             element={
               <CommandLayout>
                 <Supply />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/bom"
+            element={
+              <CommandLayout>
+                <SupplyBOM />
               </CommandLayout>
             }
           />

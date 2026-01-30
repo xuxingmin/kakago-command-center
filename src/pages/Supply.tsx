@@ -1,6 +1,57 @@
-import { Box } from "lucide-react";
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { Link } from "react-router-dom";
+import { Box, FileText, BarChart3, ClipboardList, Truck } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+const supplyModules = [
+  {
+    title: "BOM 配方配置",
+    description: "定义 SKU 与原料的消耗关系",
+    icon: FileText,
+    path: "/supply/bom",
+  },
+  {
+    title: "全城产能监控",
+    description: "实时查看各门店剩余产能",
+    icon: BarChart3,
+    path: "/supply/dashboard",
+  },
+  {
+    title: "库存修正与盘点",
+    description: "校准系统库存与实际库存",
+    icon: ClipboardList,
+    path: "/supply/adjust",
+  },
+  {
+    title: "智能推配中心",
+    description: "自动计算补货量并生成配送单",
+    icon: Truck,
+    path: "/supply/push",
+  },
+];
 
 export default function Supply() {
-  return <PagePlaceholder title="供应链模块" icon={Box} />;
+  return (
+    <div className="h-full space-y-6">
+      <div className="flex items-center gap-3">
+        <Box className="w-6 h-6 text-primary" />
+        <h1 className="text-2xl font-bold text-foreground">供应链管理</h1>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {supplyModules.map((module) => (
+          <Link key={module.path} to={module.path}>
+            <Card className="h-full bg-[#121212] border-[#333333] hover:border-primary/50 transition-all duration-200 cursor-pointer group">
+              <CardHeader>
+                <module.icon className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base text-foreground">{module.title}</CardTitle>
+                <CardDescription className="text-muted-foreground text-sm">
+                  {module.description}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
