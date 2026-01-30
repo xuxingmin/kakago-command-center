@@ -7,6 +7,7 @@ import {
   Wallet,
   Settings,
   Database,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +24,7 @@ const menuItems = [
   { path: "/supply", label: "供应链", icon: Box },
   { path: "/finance", label: "财务", icon: Wallet },
   { path: "/data-hub", label: "数据中心", icon: Database },
+  { path: "/admin/master-data", label: "主数据", icon: Crown },
   { path: "/settings", label: "设置", icon: Settings },
 ];
 
