@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { CommandSidebar } from "./CommandSidebar";
-import { HUDHeader } from "./HUDHeader";
 
 interface CommandLayoutProps {
   children: ReactNode;
@@ -8,13 +7,12 @@ interface CommandLayoutProps {
 
 export function CommandLayout({ children }: CommandLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen h-screen bg-background overflow-hidden">
       <CommandSidebar />
       
-      {/* 主内容区域 - 需要给侧边栏留出空间 */}
-      <div className="ml-56 transition-all duration-300 peer-collapsed:ml-16">
-        <HUDHeader />
-        <main className="p-6 min-h-[calc(100vh-4rem)]">
+      {/* 主内容区域 - 极简侧边栏仅占 56px */}
+      <div className="ml-14 h-screen overflow-hidden">
+        <main className="h-full p-4">
           {children}
         </main>
       </div>
