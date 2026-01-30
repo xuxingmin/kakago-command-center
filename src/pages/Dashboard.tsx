@@ -1,5 +1,7 @@
 import { KPIGrid } from "@/components/dashboard/KPIGrid";
 import { StoreMap } from "@/components/dashboard/StoreMap";
+import { OrderStream } from "@/components/dashboard/OrderStream";
+import { ExceptionMonitor } from "@/components/dashboard/ExceptionMonitor";
 
 export default function Dashboard() {
   return (
@@ -14,13 +16,13 @@ export default function Dashboard() {
           <StoreMap />
         </div>
         
-        {/* 右侧面板 35% */}
-        <div className="w-[35%] flex flex-col gap-4">
-          <div className="flex-1 bg-card border border-border rounded-lg p-4 flex items-center justify-center">
-            <span className="text-muted-foreground text-sm">实时订单流 · 开发中</span>
+        {/* 右侧面板 35% - 上下等分 */}
+        <div className="w-[35%] flex flex-col gap-3">
+          <div className="flex-1 min-h-0">
+            <OrderStream />
           </div>
-          <div className="flex-1 bg-card border border-border rounded-lg p-4 flex items-center justify-center">
-            <span className="text-muted-foreground text-sm">预警中心 · 开发中</span>
+          <div className="flex-1 min-h-0">
+            <ExceptionMonitor />
           </div>
         </div>
       </div>
