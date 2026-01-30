@@ -44,21 +44,21 @@ const frequencyColors: Record<string, string> = {
 
 export function UserDataTable() {
   return (
-    <div className="bg-[#121212] border border-[#2A2A2E] rounded-lg flex flex-col h-full">
+    <div className="bg-[#121212] border border-[#2A2A2E] rounded-xl flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#2A2A2E]">
-        <h3 className="text-sm font-medium text-white">用户画像数据库</h3>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#2A2A2E] flex-shrink-0">
+        <h3 className="text-sm font-semibold text-white">用户画像数据库</h3>
+        <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6B7280]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
             <Input 
               placeholder="搜索用户ID/手机号" 
-              className="pl-8 h-8 w-48 text-xs bg-[#0A0A0A] border-[#2A2A2E] text-white placeholder:text-[#6B7280]"
+              className="pl-9 h-9 w-56 text-sm bg-[#0A0A0A] border-[#2A2A2E] text-white placeholder:text-[#6B7280]"
             />
           </div>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23] hover:text-white">
-            <Filter className="w-3.5 h-3.5" />
-            <span className="text-xs">筛选</span>
+          <Button variant="outline" size="sm" className="h-9 gap-2 bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23] hover:text-white">
+            <Filter className="w-4 h-4" />
+            <span className="text-sm">筛选</span>
           </Button>
         </div>
       </div>
@@ -68,7 +68,7 @@ export function UserDataTable() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-[#2A2A2E]">
-              <TableHead className="text-xs text-[#6B7280] font-medium">用户ID</TableHead>
+              <TableHead className="text-xs text-[#6B7280] font-medium h-12">用户ID</TableHead>
               <TableHead className="text-xs text-[#6B7280] font-medium">手机号</TableHead>
               <TableHead className="text-xs text-[#6B7280] font-medium">注册时间</TableHead>
               <TableHead className="text-xs text-[#6B7280] font-medium">最近消费</TableHead>
@@ -83,17 +83,17 @@ export function UserDataTable() {
             {mockUsers.map((user) => (
               <TableRow 
                 key={user.id} 
-                className="border-[#2A2A2E] hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                className="border-[#2A2A2E] hover:bg-[#1A1A1A] transition-colors cursor-pointer h-12"
               >
-                <TableCell className="font-mono text-xs text-white">{user.id}</TableCell>
-                <TableCell className="font-mono text-xs text-[#9CA3AF]">{user.phone}</TableCell>
-                <TableCell className="font-mono text-xs text-[#6B7280]">{user.registeredAt}</TableCell>
-                <TableCell className="font-mono text-xs text-[#9CA3AF]">{user.lastConsumeAt}</TableCell>
-                <TableCell className="font-mono text-xs text-white text-center font-bold">{user.totalOrders}</TableCell>
+                <TableCell className="font-mono text-sm text-white">{user.id}</TableCell>
+                <TableCell className="font-mono text-sm text-[#9CA3AF]">{user.phone}</TableCell>
+                <TableCell className="font-mono text-sm text-[#6B7280]">{user.registeredAt}</TableCell>
+                <TableCell className="font-mono text-sm text-[#9CA3AF]">{user.lastConsumeAt}</TableCell>
+                <TableCell className="font-mono text-sm text-white text-center font-bold">{user.totalOrders}</TableCell>
                 <TableCell className="text-center">
                   <Badge 
                     variant="outline" 
-                    className={cn("text-[10px] font-medium", frequencyColors[user.frequency])}
+                    className={cn("text-xs font-medium", frequencyColors[user.frequency])}
                   >
                     {user.frequency}
                   </Badge>
@@ -101,19 +101,19 @@ export function UserDataTable() {
                 <TableCell>
                   <Badge 
                     variant="outline" 
-                    className={cn("text-[10px] font-medium", preferenceColors[user.preferenceTag])}
+                    className={cn("text-xs font-medium", preferenceColors[user.preferenceTag])}
                   >
                     {user.preferenceTag}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-primary text-right font-bold">
+                <TableCell className="font-mono text-sm text-primary text-right font-bold">
                   {user.kakaBeans.toLocaleString()}
                 </TableCell>
                 <TableCell className="text-center">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-6 w-6 p-0 hover:bg-primary/10"
+                    className="h-8 w-8 p-0 hover:bg-primary/10"
                   >
                     <ChevronRight className="w-4 h-4 text-[#6B7280]" />
                   </Button>
@@ -125,25 +125,25 @@ export function UserDataTable() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-[#2A2A2E]">
-        <span className="text-xs text-[#6B7280]">
+      <div className="flex items-center justify-between px-5 py-3 border-t border-[#2A2A2E] flex-shrink-0">
+        <span className="text-sm text-[#6B7280]">
           显示 1-8 共 86,432 条记录
         </span>
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-transparent border-[#2A2A2E] text-[#6B7280]" disabled>
+          <Button variant="outline" size="sm" className="h-8 px-3 text-sm bg-transparent border-[#2A2A2E] text-[#6B7280]" disabled>
             上一页
           </Button>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-primary/10 border-primary/30 text-primary">
+          <Button variant="outline" size="sm" className="h-8 px-3 text-sm bg-primary/10 border-primary/30 text-primary">
             1
           </Button>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
+          <Button variant="outline" size="sm" className="h-8 px-3 text-sm bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
             2
           </Button>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
+          <Button variant="outline" size="sm" className="h-8 px-3 text-sm bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
             3
           </Button>
-          <span className="text-xs text-[#6B7280] px-1">...</span>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
+          <span className="text-sm text-[#6B7280] px-2">...</span>
+          <Button variant="outline" size="sm" className="h-8 px-3 text-sm bg-transparent border-[#2A2A2E] text-[#9CA3AF] hover:bg-[#1F1F23]">
             下一页
           </Button>
         </div>
