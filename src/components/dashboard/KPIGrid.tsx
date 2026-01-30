@@ -1,14 +1,14 @@
 import { TrendingUp, TrendingDown, Coffee, DollarSign, Users, Store, UserPlus, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// SKU 占比数据 - 6种SKU
+// SKU 占比数据 - 6种SKU with distinct colors
 const skuData = [
-  { name: "热美", value: 18 },
-  { name: "冰美", value: 17 },
-  { name: "热拿", value: 22 },
-  { name: "冰拿", value: 20 },
-  { name: "卡布", value: 12 },
-  { name: "澳白", value: 11 },
+  { name: "热美", value: 18, color: "bg-orange-500" },
+  { name: "冰美", value: 17, color: "bg-cyan-500" },
+  { name: "热拿", value: 22, color: "bg-amber-500" },
+  { name: "冰拿", value: 20, color: "bg-blue-500" },
+  { name: "卡布", value: 12, color: "bg-purple-500" },
+  { name: "澳白", value: 11, color: "bg-emerald-500" },
 ];
 
 interface KPICardProps {
@@ -77,7 +77,6 @@ function MerchantCard() {
 }
 
 function SKUCard() {
-  const maxValue = Math.max(...skuData.map(d => d.value));
   return (
     <div
       className={cn(
@@ -96,10 +95,10 @@ function SKUCard() {
               <span className="text-xs text-[#9CA3AF]">{item.name}</span>
               <span className="font-mono text-xs font-bold text-white tabular-nums">{item.value}%</span>
             </div>
-            <div className="h-1 bg-[#333333] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[#333333] rounded-full overflow-hidden">
               <div 
-                className="h-full bg-primary/70 rounded-full transition-all duration-500"
-                style={{ width: `${(item.value / maxValue) * 100}%` }}
+                className={cn("h-full rounded-full transition-all duration-500", item.color)}
+                style={{ width: `${item.value}%` }}
               />
             </div>
           </div>
