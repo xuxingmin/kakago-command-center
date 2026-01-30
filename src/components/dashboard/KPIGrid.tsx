@@ -71,15 +71,13 @@ function MerchantCard() {
         <span className="font-mono text-xl font-extrabold text-white tabular-nums">42</span>
         <span className="font-mono text-lg text-[#9CA3AF] tabular-nums">/68</span>
       </div>
-      <div className="flex items-center gap-3 mt-1">
-        <span className="text-xs text-[#9CA3AF]">家在线</span>
-        <span className="text-xs text-[#9CA3AF]">注册商户</span>
-      </div>
+      <span className="text-xs text-[#9CA3AF] mt-1">在线/注册</span>
     </div>
   );
 }
 
 function SKUCard() {
+  const maxValue = Math.max(...skuData.map(d => d.value));
   return (
     <div
       className={cn(
@@ -91,11 +89,19 @@ function SKUCard() {
         <span className="text-xs text-[#9CA3AF]">SKU 占比</span>
         <Package className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
-      <div className="grid grid-cols-3 gap-x-4 gap-y-1">
+      <div className="grid grid-cols-3 gap-x-4 gap-y-2">
         {skuData.map((item) => (
-          <div key={item.name} className="flex items-center justify-between">
-            <span className="text-xs text-[#9CA3AF]">{item.name}</span>
-            <span className="font-mono text-sm font-bold text-white tabular-nums">{item.value}%</span>
+          <div key={item.name} className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#9CA3AF]">{item.name}</span>
+              <span className="font-mono text-xs font-bold text-white tabular-nums">{item.value}%</span>
+            </div>
+            <div className="h-1 bg-[#333333] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary/70 rounded-full transition-all duration-500"
+                style={{ width: `${(item.value / maxValue) * 100}%` }}
+              />
+            </div>
           </div>
         ))}
       </div>
