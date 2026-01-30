@@ -14,55 +14,38 @@ function KPICard({ title, value, subValue, trend, icon: Icon, accentColor = "#7F
   return (
     <div
       className={cn(
-        "relative overflow-hidden bg-gradient-to-br from-[#121212] to-[#0A0A0A]",
-        "border border-[#2A2A2E] rounded-xl p-4",
-        "hover:border-[#3A3A3E] transition-all duration-300 group"
+        "relative overflow-hidden h-full",
+        "bg-[#121212] border border-[#2A2A2E] rounded-xl px-4 py-3",
+        "hover:border-[#3A3A3E] transition-all duration-200"
       )}
     >
-      {/* 背景装饰 */}
-      <div 
-        className="absolute top-0 right-0 w-20 h-20 opacity-5 blur-2xl"
-        style={{ backgroundColor: accentColor }}
-      />
-      
-      <div className="relative">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] text-[#6B7280] uppercase tracking-wider font-medium">{title}</span>
-          <div 
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${accentColor}15` }}
-          >
-            <Icon className="w-4 h-4" style={{ color: accentColor }} />
+      <div className="flex items-center justify-between h-full">
+        <div className="flex flex-col justify-center">
+          <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-medium mb-1">{title}</span>
+          <div className="font-mono text-xl font-black text-white tabular-nums leading-none">
+            {value}
           </div>
-        </div>
-        
-        <div className="font-mono text-2xl font-black text-white tabular-nums tracking-tight">
-          {value}
-        </div>
-        
-        {(subValue || trend !== undefined) && (
-          <div className="flex items-center gap-2 mt-2">
-            {trend !== undefined && (
-              <div className={cn(
-                "flex items-center gap-1 px-1.5 py-0.5 rounded",
-                trend >= 0 ? "bg-[#22c55e]/10" : "bg-[#ef4444]/10"
-              )}>
-                {trend >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-[#22c55e]" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-[#ef4444]" />
-                )}
-                <span className={cn(
-                  "text-[11px] font-mono font-bold tabular-nums",
-                  trend >= 0 ? "text-[#22c55e]" : "text-[#ef4444]"
+          {(subValue || trend !== undefined) && (
+            <div className="flex items-center gap-2 mt-1">
+              {trend !== undefined && (
+                <div className={cn(
+                  "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-mono font-bold tabular-nums",
+                  trend >= 0 ? "bg-[#22c55e]/10 text-[#22c55e]" : "bg-[#ef4444]/10 text-[#ef4444]"
                 )}>
+                  {trend >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                   {trend >= 0 ? "+" : ""}{trend}%
-                </span>
-              </div>
-            )}
-            {subValue && <span className="text-[11px] text-[#6B7280]">{subValue}</span>}
-          </div>
-        )}
+                </div>
+              )}
+              {subValue && <span className="text-[10px] text-[#6B7280]">{subValue}</span>}
+            </div>
+          )}
+        </div>
+        <div 
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${accentColor}15` }}
+        >
+          <Icon className="w-4 h-4" style={{ color: accentColor }} />
+        </div>
       </div>
     </div>
   );
@@ -70,7 +53,7 @@ function KPICard({ title, value, subValue, trend, icon: Icon, accentColor = "#7F
 
 export function UserKPICards() {
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-4 gap-3 h-full">
       <KPICard
         title="总用户数"
         value="86,432"
