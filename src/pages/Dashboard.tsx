@@ -11,28 +11,28 @@ export default function Dashboard() {
       {/* 顶部经营数据看板 */}
       <KPIGrid />
       
-      {/* 中间区域 - 65% 地图 + 35% 实时订单流 */}
-      <div className="flex gap-3 min-h-0" style={{ height: "calc(55% - 1rem)" }}>
-        {/* 左侧地图 65% */}
-        <div className="w-[65%] h-full">
+      {/* 中间区域 - 地图 + 实时订单流 */}
+      <div className="flex gap-3 flex-1 min-h-0">
+        {/* 左侧地图 */}
+        <div className="w-[62%] h-full">
           <StoreMap />
         </div>
         
-        {/* 右侧订单流 35% - 扩大显示 */}
-        <div className="w-[35%] h-full">
+        {/* 右侧订单流 */}
+        <div className="w-[38%] h-full">
           <OrderStream />
         </div>
       </div>
 
-      {/* 底部区域 - 事件预警 50% | 客户满意度+投诉工单 各25% */}
-      <div className="flex gap-3" style={{ height: "calc(25%)" }}>
-        <div className="w-1/2 h-full">
+      {/* 底部区域 - 事件预警 | 客户满意度 | 投诉工单 */}
+      <div className="flex gap-3 h-[200px] flex-shrink-0">
+        <div className="w-[45%] h-full">
           <ExceptionMonitor />
         </div>
-        <div className="w-1/4 h-full">
+        <div className="w-[27%] h-full">
           <CustomerSatisfaction />
         </div>
-        <div className="w-1/4 h-full">
+        <div className="w-[28%] h-full">
           <TicketList />
         </div>
       </div>
