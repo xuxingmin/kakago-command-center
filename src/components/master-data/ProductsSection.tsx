@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Plus, Pencil, Coffee, Package, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
+import { BatchUploadButton, FieldMapping } from "./BatchUploadButton";
 
 type Product = {
   id: string;
@@ -25,6 +26,27 @@ type Product = {
   is_active: boolean;
   image_url: string | null;
 };
+
+const productFieldMappings: FieldMapping[] = [
+  { dbField: "name", excelField: "产品名称", label: "产品名称", required: true },
+  { dbField: "name_en", excelField: "英文名称", label: "英文名称" },
+  { dbField: "price", excelField: "售价 (元)", label: "售价", required: true, transform: (v) => parseFloat(v) || 0 },
+  { dbField: "spec_ml", excelField: "规格 (ml)", label: "规格ml", transform: (v) => v ? parseFloat(v) : null },
+  { dbField: "description", excelField: "产品介绍", label: "介绍" },
+  { dbField: "attributes", excelField: "产品属性", label: "属性" },
+  { dbField: "notes", excelField: "备注", label: "备注" },
+  { 
+    dbField: "is_active", 
+    excelField: "上架状态", 
+    label: "上架",
+    transform: (v) => v === "是" || v === "true" || v === true || v === 1
+  },
+];
+
+const productSampleData = [
+  { "产品名称": "热美式", "英文名称": "Hot Americano", "售价 (元)": "12", "规格 (ml)": "350", "上架状态": "是" },
+  { "产品名称": "冰拿铁", "英文名称": "Iced Latte", "售价 (元)": "15", "规格 (ml)": "450", "上架状态": "是" },
+];
 
 interface ProductsSectionProps {
   products: Product[];
@@ -40,6 +62,12 @@ export function ProductsSection({ products, productsWithoutBOM, queryClient }: P
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleBatchUpload = async (data: any[]) => {
+    const { error } = await supabase.from("sku_products").insert(data);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["master_products"] });
+  };
 
   return (
     <Card className="bg-card border-border">
@@ -67,6 +95,13 @@ export function ProductsSection({ products, productsWithoutBOM, queryClient }: P
                 className="pl-9 w-64 bg-background border-border"
               />
             </div>
+            <BatchUploadButton
+              title="批量导入产品"
+              description="上传 Excel 文件批量导入产品数据，支持 .xlsx 和 .csv 格式"
+              fieldMappings={productFieldMappings}
+              onUpload={handleBatchUpload}
+              sampleData={productSampleData}
+            />
             <ProductDialog queryClient={queryClient} existingNames={products.map(p => p.name)} />
           </div>
         </div>

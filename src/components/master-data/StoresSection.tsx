@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus, Pencil, Store, AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { BatchUploadButton, FieldMapping } from "./BatchUploadButton";
 
 type StoreType = {
   id: string;
@@ -25,6 +26,28 @@ type Material = {
   id: string;
   name: string;
 };
+
+const storeFieldMappings: FieldMapping[] = [
+  { dbField: "name", excelField: "门店名称", label: "门店名称", required: true },
+  { dbField: "address", excelField: "门店地址", label: "地址" },
+  { dbField: "contact_phone", excelField: "负责人手机", label: "电话" },
+  { 
+    dbField: "status", 
+    excelField: "状态", 
+    label: "状态",
+    transform: (v) => {
+      if (v === "营业中" || v === "active") return "active";
+      if (v === "装修中" || v === "renovating") return "renovating";
+      if (v === "暂停" || v === "inactive") return "inactive";
+      return "active";
+    }
+  },
+];
+
+const storeSampleData = [
+  { "门店名称": "滨湖银泰店", "门店地址": "合肥市滨湖区银泰城1楼", "负责人手机": "13800138000", "状态": "营业中" },
+  { "门店名称": "政务中心店", "门店地址": "合肥市政务区天鹅湖万达广场", "负责人手机": "13900139000", "状态": "营业中" },
+];
 
 interface StoresSectionProps {
   stores: StoreType[];
@@ -83,6 +106,32 @@ export function StoresSection({ stores, materials, storesWithIncompleteInventory
     },
   });
 
+  const handleBatchUpload = async (data: any[]) => {
+    // Insert stores
+    const { data: insertedStores, error } = await supabase
+      .from("stores")
+      .insert(data)
+      .select();
+    if (error) throw error;
+
+    // Auto-initialize inventory for new stores
+    if (insertedStores && materials.length > 0) {
+      const inventoryRecords = insertedStores.flatMap(store => 
+        materials.map(m => ({
+          store_id: store.id,
+          material_id: m.id,
+          current_quantity: 0,
+          theoretical_quantity: 0,
+        }))
+      );
+      
+      await supabase.from("store_inventory").insert(inventoryRecords);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["master_stores"] });
+    queryClient.invalidateQueries({ queryKey: ["master_store_inventory"] });
+  };
+
   return (
     <Card className="bg-card border-border">
       <CardHeader className="border-b border-border">
@@ -109,6 +158,13 @@ export function StoresSection({ stores, materials, storesWithIncompleteInventory
                 className="pl-9 w-64 bg-background border-border"
               />
             </div>
+            <BatchUploadButton
+              title="批量导入门店"
+              description="上传 Excel 文件批量导入门店数据，系统将自动初始化库存"
+              fieldMappings={storeFieldMappings}
+              onUpload={handleBatchUpload}
+              sampleData={storeSampleData}
+            />
             <StoreDialog queryClient={queryClient} materials={materials} />
           </div>
         </div>
