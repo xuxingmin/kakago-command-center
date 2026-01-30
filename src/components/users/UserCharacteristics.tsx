@@ -1,75 +1,46 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, LabelList } from "recharts";
-import { MapPin, Clock, Coffee, Users } from "lucide-react";
-
-// 性别数据
-const genderData = [
-  { name: "女性", value: 58, count: 50131, color: "#7c3aed" },
-  { name: "男性", value: 42, count: 36301, color: "#3f3f46" },
-];
-
-// 区域分布数据 - Top 5
-const regionData = [
-  { name: "政务区", value: 28, count: 24201 },
-  { name: "高新区", value: 24, count: 20744 },
-  { name: "滨湖区", value: 19, count: 16422 },
-  { name: "蜀山区", value: 16, count: 13829 },
-  { name: "包河区", value: 13, count: 11236 },
-];
-
-// 购买时段数据
-const timeData = [
-  { name: "早安时段", time: "8-11点", value: 28 },
-  { name: "午间提神", time: "11-14点", value: 45 },
-  { name: "下午茶", time: "14-18点", value: 27 },
-];
-
-// 口味偏好数据
-const tasteData = {
-  americano: { total: 35, male: 60, female: 22 },
-  latte: { total: 48, male: 25, female: 75 },
-  other: { total: 17 },
-};
-
-const tempData = {
-  cold: 65,
-  hot: 35,
-};
-
-// 通用深色 Tooltip
-const DarkTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; name: string }> }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-[#0A0A0A] border border-[#333] rounded px-2 py-1 shadow-xl">
-        <span className="font-mono text-xs text-white">{payload[0].value}%</span>
-      </div>
-    );
-  }
-  return null;
-};
 
 // ═══════════════════════════════════════════════════════════════
-// 卡片 A: 性别与画像
+// 数据定义
+// ═══════════════════════════════════════════════════════════════
+const genderData = [
+  { name: "女", value: 58, color: "#7c3aed" },
+  { name: "男", value: 42, color: "#3f3f46" },
+];
+
+const regionData = [
+  { name: "政务区", value: 28 },
+  { name: "高新区", value: 24 },
+  { name: "滨湖区", value: 19 },
+  { name: "蜀山区", value: 16 },
+  { name: "包河区", value: 13 },
+];
+
+const timeData = [
+  { name: "早安", time: "8-11", value: 28 },
+  { name: "午间", time: "11-14", value: 45 },
+  { name: "下午茶", time: "14-18", value: 27 },
+];
+
+const tasteData = { americano: 35, latte: 48, maleA: 60, femaleL: 75 };
+const tempData = { cold: 65, hot: 35 };
+
+// ═══════════════════════════════════════════════════════════════
+// 卡片 A: 性别比例 (col-span-2)
 // ═══════════════════════════════════════════════════════════════
 function GenderCard() {
-  const total = genderData.reduce((sum, d) => sum + d.count, 0);
-  
   return (
-    <div className="bg-[#121212] border border-[#333] rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-3">
-        <Users className="w-4 h-4 text-[#6B7280]" />
-        <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">性别画像</h4>
-      </div>
-      
-      <div className="flex-1 flex items-center">
-        {/* 环形图 */}
-        <div className="w-1/2 h-full relative">
+    <div className="col-span-2 bg-[#121212] border border-white/10 rounded-xl p-3 h-full flex flex-col">
+      <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">性别比例</h4>
+      <div className="flex-1 flex items-center min-h-0">
+        <div className="w-3/5 h-full relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={genderData}
                 cx="50%"
                 cy="50%"
-                innerRadius="55%"
+                innerRadius="50%"
                 outerRadius="85%"
                 dataKey="value"
                 stroke="none"
@@ -82,25 +53,16 @@ function GenderCard() {
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          {/* 中心总人数 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono text-lg font-black text-white tabular-nums">{(total / 1000).toFixed(1)}K</span>
-            <span className="text-[9px] text-[#6B7280]">总用户</span>
+            <span className="font-mono text-base font-black text-white tabular-nums">86.4K</span>
           </div>
         </div>
-        
-        {/* 右侧数据 */}
-        <div className="w-1/2 flex flex-col justify-center gap-4 pl-2">
+        <div className="w-2/5 space-y-3">
           {genderData.map((item) => (
-            <div key={item.name} className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }} />
-                <span className="text-sm text-[#9CA3AF]">{item.name}</span>
-              </div>
-              <div className="flex items-baseline gap-2 pl-5">
-                <span className="font-mono text-2xl font-black text-white tabular-nums">{item.value}%</span>
-                <span className="font-mono text-xs text-[#6B7280] tabular-nums">{item.count.toLocaleString()}人</span>
-              </div>
+            <div key={item.name} className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded" style={{ backgroundColor: item.color }} />
+              <span className="text-xs text-[#9CA3AF]">{item.name}</span>
+              <span className="font-mono text-lg font-black text-white tabular-nums ml-auto">{item.value}%</span>
             </div>
           ))}
         </div>
@@ -110,44 +72,35 @@ function GenderCard() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 卡片 B: 区域热力分布
+// 卡片 B: 区域分布 (col-span-3)
 // ═══════════════════════════════════════════════════════════════
 function RegionCard() {
-  // 渐变紫色
-  const getBarColor = (index: number) => {
-    const colors = ["#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"];
-    return colors[index] || colors[4];
-  };
-
+  const colors = ["#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"];
+  
   return (
-    <div className="bg-[#121212] border border-[#333] rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-3">
-        <MapPin className="w-4 h-4 text-[#6B7280]" />
-        <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">区域分布</h4>
-        <span className="text-[9px] text-[#4B5563] ml-auto">收货地址 TOP5</span>
-      </div>
-      
+    <div className="col-span-3 bg-[#121212] border border-white/10 rounded-xl p-3 h-full flex flex-col">
+      <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">区域分布</h4>
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={regionData} layout="vertical" margin={{ top: 0, right: 50, left: 0, bottom: 0 }}>
-            <XAxis type="number" hide domain={[0, 35]} />
+          <BarChart data={regionData} layout="vertical" margin={{ top: 0, right: 35, left: 0, bottom: 0 }}>
+            <XAxis type="number" hide />
             <YAxis 
               type="category" 
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: "#9CA3AF", fontSize: 11 }} 
-              width={50}
+              tick={{ fill: "#9CA3AF", fontSize: 10 }} 
+              width={45}
             />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
-              {regionData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(index)} />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
+              {regionData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index]} />
               ))}
               <LabelList 
-                dataKey="count" 
+                dataKey="value" 
                 position="right" 
-                formatter={(v: number) => v.toLocaleString()}
-                style={{ fill: "#fff", fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}
+                formatter={(v: number) => `${v}%`}
+                style={{ fill: "#fff", fontSize: 10, fontFamily: "monospace", fontWeight: 700 }}
               />
             </Bar>
           </BarChart>
@@ -158,133 +111,113 @@ function RegionCard() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 卡片 C: 购买时段偏好
+// 卡片 C: 购买时段 (col-span-3)
 // ═══════════════════════════════════════════════════════════════
 function TimeSlotCard() {
   return (
-    <div className="bg-[#121212] border border-[#333] rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-3">
-        <Clock className="w-4 h-4 text-[#6B7280]" />
-        <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">购买时段</h4>
-      </div>
-      
+    <div className="col-span-3 bg-[#121212] border border-white/10 rounded-xl p-3 h-full flex flex-col">
+      <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">购买时段</h4>
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={timeData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+          <AreaChart data={timeData} margin={{ top: 25, right: 10, left: 10, bottom: 5 }}>
             <defs>
-              <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.6} />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.05} />
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis 
-              dataKey="time" 
+              dataKey="name" 
               axisLine={false} 
               tickLine={false}
               tick={{ fill: "#6B7280", fontSize: 10 }}
             />
             <YAxis hide domain={[0, 55]} />
-            <Tooltip content={<DarkTooltip />} />
             <Area 
               type="monotone" 
               dataKey="value" 
               stroke="#7c3aed" 
               strokeWidth={2}
-              fill="url(#timeGradient)"
-            />
-            {/* 峰值标注 */}
-            <LabelList 
-              dataKey="value"
-              position="top"
-              formatter={(v: number) => v === 45 ? `🔥 ${v}%` : `${v}%`}
-              style={{ 
-                fill: "#fff", 
-                fontSize: 12, 
-                fontFamily: "monospace", 
-                fontWeight: 800 
-              }}
-            />
+              fill="url(#areaGrad)"
+            >
+              <LabelList 
+                dataKey="value"
+                position="top"
+                formatter={(v: number) => `${v}%`}
+                style={{ fill: "#fff", fontSize: 11, fontFamily: "monospace", fontWeight: 800 }}
+              />
+            </Area>
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      
-      {/* 底部时段标签 */}
-      <div className="flex justify-between mt-2 px-2">
-        {timeData.map((item, idx) => (
-          <div key={item.name} className={`text-center ${idx === 1 ? 'text-[#7c3aed]' : 'text-[#6B7280]'}`}>
-            <span className="text-[10px] font-medium">{item.name}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 卡片 D: 口味与冷热偏好
+// 卡片 D: 口味全景 (col-span-4)
 // ═══════════════════════════════════════════════════════════════
 function TasteCard() {
   return (
-    <div className="bg-[#121212] border border-[#333] rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-3">
-        <Coffee className="w-4 h-4 text-[#6B7280]" />
-        <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">口味偏好</h4>
-      </div>
+    <div className="col-span-4 bg-[#121212] border border-white/10 rounded-xl p-3 h-full flex flex-col">
+      <h4 className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">口味全景</h4>
       
-      {/* 上层：SKU偏好 */}
-      <div className="flex-1 space-y-3">
-        {/* 美式 */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white font-medium">美式</span>
-            <span className="font-mono text-lg font-black text-white tabular-nums">{tasteData.americano.total}%</span>
+      <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+        {/* 左栏: 美式 vs 拿铁 */}
+        <div className="flex flex-col justify-center space-y-4">
+          {/* 美式 */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white font-medium">美式</span>
+              <span className="font-mono text-xl font-black text-white tabular-nums">{tasteData.americano}%</span>
+            </div>
+            <div className="h-2.5 bg-[#1F1F23] rounded-full overflow-hidden">
+              <div className="h-full bg-[#22c55e] rounded-full" style={{ width: `${tasteData.americano}%` }} />
+            </div>
+            <div className="flex gap-3 text-[10px]">
+              <span className="text-[#3b82f6]">♂ {tasteData.maleA}%</span>
+              <span className="text-[#ec4899]">♀ {100 - tasteData.maleA}%</span>
+            </div>
           </div>
-          <div className="h-3 bg-[#1F1F23] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-full" style={{ width: `${tasteData.americano.total}%` }} />
+          
+          {/* 拿铁 */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white font-medium">拿铁</span>
+              <span className="font-mono text-xl font-black text-white tabular-nums">{tasteData.latte}%</span>
+            </div>
+            <div className="h-2.5 bg-[#1F1F23] rounded-full overflow-hidden">
+              <div className="h-full bg-[#7c3aed] rounded-full" style={{ width: `${tasteData.latte}%` }} />
+            </div>
+            <div className="flex gap-3 text-[10px]">
+              <span className="text-[#3b82f6]">♂ {100 - tasteData.femaleL}%</span>
+              <span className="text-[#ec4899]">♀ {tasteData.femaleL}%</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-[10px]">
-            <span className="text-[#3b82f6]">♂ 男性 {tasteData.americano.male}%</span>
-            <span className="text-[#ec4899]">♀ 女性 {tasteData.americano.female}%</span>
-          </div>
+          
+          <div className="text-[10px] text-[#4B5563]">其他 17%</div>
         </div>
         
-        {/* 拿铁 */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white font-medium">拿铁</span>
-            <span className="font-mono text-lg font-black text-white tabular-nums">{tasteData.latte.total}%</span>
-          </div>
-          <div className="h-3 bg-[#1F1F23] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] rounded-full" style={{ width: `${tasteData.latte.total}%` }} />
-          </div>
-          <div className="flex items-center gap-4 text-[10px]">
-            <span className="text-[#3b82f6]">♂ 男性 {tasteData.latte.male}%</span>
-            <span className="text-[#ec4899]">♀ 女性 {tasteData.latte.female}%</span>
-          </div>
-        </div>
-        
-        {/* 其他 */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[#6B7280]">其他 (澳白/卡布/特调)</span>
-          <span className="font-mono text-sm font-bold text-[#9CA3AF] tabular-nums">{tasteData.other.total}%</span>
-        </div>
-      </div>
-      
-      {/* 下层：冷热偏好 */}
-      <div className="mt-3 pt-3 border-t border-[#333]">
-        <div className="flex items-center justify-between mb-2">
+        {/* 右栏: 冷 vs 热 */}
+        <div className="flex flex-col justify-center space-y-3">
           <span className="text-[10px] text-[#6B7280] uppercase tracking-wider">冷热偏好</span>
-        </div>
-        <div className="flex gap-3">
+          
           {/* 冷饮 */}
-          <div className="flex-1 bg-gradient-to-r from-[#0ea5e9]/20 to-[#0ea5e9]/5 border border-[#0ea5e9]/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-            <span className="text-xs text-[#0ea5e9]">🧊 冷饮</span>
-            <span className="font-mono text-sm font-black text-[#0ea5e9] tabular-nums">{tempData.cold}%</span>
+          <div className="bg-[#0ea5e9]/10 border border-[#0ea5e9]/30 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🧊</span>
+              <span className="text-sm text-[#0ea5e9] font-medium">冷饮</span>
+            </div>
+            <span className="font-mono text-2xl font-black text-[#0ea5e9] tabular-nums">{tempData.cold}%</span>
           </div>
+          
           {/* 热饮 */}
-          <div className="flex-1 bg-gradient-to-r from-[#f97316]/20 to-[#f97316]/5 border border-[#f97316]/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-            <span className="text-xs text-[#f97316]">☕ 热饮</span>
-            <span className="font-mono text-sm font-black text-[#f97316] tabular-nums">{tempData.hot}%</span>
+          <div className="bg-[#f97316]/10 border border-[#f97316]/30 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">☕</span>
+              <span className="text-sm text-[#f97316] font-medium">热饮</span>
+            </div>
+            <span className="font-mono text-2xl font-black text-[#f97316] tabular-nums">{tempData.hot}%</span>
           </div>
         </div>
       </div>
@@ -293,11 +226,11 @@ function TasteCard() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 主导出组件
+// 主导出: 12列网格容器
 // ═══════════════════════════════════════════════════════════════
 export function UserCharacteristics() {
   return (
-    <div className="grid grid-cols-4 gap-4 h-full">
+    <div className="grid grid-cols-12 gap-4 h-[280px]">
       <GenderCard />
       <RegionCard />
       <TimeSlotCard />
