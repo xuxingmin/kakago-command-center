@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Box, FileText, BarChart3, ClipboardList, Truck, Package } from "lucide-react";
+import { Box, FileText, BarChart3, ClipboardList, Truck, Package, ShoppingCart } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const supplyModules = [
@@ -20,6 +20,12 @@ const supplyModules = [
     description: "实时查看各门店剩余产能",
     icon: BarChart3,
     path: "/supply/dashboard",
+  },
+  {
+    title: "商户要货",
+    description: "门店主动追加物料申请",
+    icon: ShoppingCart,
+    path: "/supply/request",
   },
   {
     title: "库存修正与盘点",
