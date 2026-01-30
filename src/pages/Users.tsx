@@ -26,8 +26,8 @@ export default function Users() {
         </div>
       </section>
 
-      {/* Row 3: 用户特征分析 - 四栏布局 */}
-      <section className="h-[200px] flex-shrink-0">
+      {/* Row 3: 用户特征分析 - 四栏布局 固定320px */}
+      <section className="h-80 flex-shrink-0">
         <UserCharacteristics />
       </section>
     </div>
