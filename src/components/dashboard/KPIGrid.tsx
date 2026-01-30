@@ -55,6 +55,30 @@ function KPICard({ title, value, subValue, trend, icon: Icon }: KPICardProps) {
   );
 }
 
+function MerchantCard() {
+  return (
+    <div
+      className={cn(
+        "bg-[#121212] border border-[#333333] rounded-lg p-3 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
+      )}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-[#9CA3AF]">营业商户</span>
+        <Store className="w-3.5 h-3.5 text-[#9CA3AF]" />
+      </div>
+      <div className="flex items-baseline gap-0.5">
+        <span className="font-mono text-xl font-extrabold text-white tabular-nums">42</span>
+        <span className="font-mono text-lg text-[#9CA3AF] tabular-nums">/68</span>
+      </div>
+      <div className="flex items-center gap-3 mt-1">
+        <span className="text-xs text-[#9CA3AF]">家在线</span>
+        <span className="text-xs text-[#9CA3AF]">注册商户</span>
+      </div>
+    </div>
+  );
+}
+
 function SKUCard() {
   return (
     <div
@@ -105,12 +129,7 @@ export function KPIGrid() {
   return (
     <div className="grid grid-cols-7 gap-3">
       {/* 1. 营业商户 */}
-      <KPICard
-        title="营业商户"
-        value="42"
-        subValue="家在线"
-        icon={Store}
-      />
+      <MerchantCard />
       {/* 2. 今日营收 */}
       <KPICard
         title="今日营收"
