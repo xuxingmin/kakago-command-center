@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 
 // SKU 占比数据 - 6种SKU
 const skuData = [
-  { name: "热美式", value: 18 },
-  { name: "冰美式", value: 17 },
-  { name: "热拿铁", value: 22 },
-  { name: "冰拿铁", value: 20 },
-  { name: "卡布奇诺", value: 12 },
+  { name: "热美", value: 18 },
+  { name: "冰美", value: 17 },
+  { name: "热拿", value: 22 },
+  { name: "冰拿", value: 20 },
+  { name: "卡布", value: 12 },
   { name: "澳白", value: 11 },
 ];
 
@@ -79,7 +79,7 @@ function SKUCard() {
   );
 }
 
-function RetentionCard() {
+function RepurchaseCard() {
   return (
     <div
       className={cn(
@@ -88,70 +88,54 @@ function RetentionCard() {
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-[#9CA3AF]">留存/复购</span>
+        <span className="text-xs text-[#9CA3AF]">今日复购</span>
         <Users className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
-      <div className="space-y-1">
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-[#9CA3AF]">商家留存</span>
-          <span className="font-mono text-sm font-bold text-white tabular-nums">92.4%</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-[#9CA3AF]">用户复购</span>
-          <span className="font-mono text-sm font-bold text-white tabular-nums">48.2%</span>
-        </div>
+      <div className="font-mono text-xl font-extrabold text-white tabular-nums">
+        48.2%
       </div>
+      <span className="text-xs text-[#9CA3AF]">老用户占比</span>
     </div>
   );
 }
 
 export function KPIGrid() {
-  const totalRevenue = 128450;
-  const merchantShare = totalRevenue * 0.5;
-  const deliveryFee = 2.1 * 12405;
-  const grossProfit = totalRevenue - merchantShare - deliveryFee;
+  const todayRevenue = 128450;
 
   return (
-    <div className="grid grid-cols-8 gap-3">
-      {/* 1. 商家数 */}
+    <div className="grid grid-cols-7 gap-3">
+      {/* 1. 营业商户 */}
       <KPICard
-        title="商家数"
+        title="营业商户"
         value="42"
         subValue="家在线"
         icon={Store}
       />
-      {/* 2. 总收入 */}
+      {/* 2. 今日营收 */}
       <KPICard
-        title="总收入"
-        value={`¥${totalRevenue.toLocaleString()}`}
+        title="今日营收"
+        value={`¥${todayRevenue.toLocaleString()}`}
         trend={12.5}
         icon={DollarSign}
       />
-      {/* 3. 出杯量 */}
+      {/* 3. 今日出杯 */}
       <KPICard
-        title="出杯量"
+        title="今日出杯"
         value="12,405"
         subValue="杯"
         trend={8.3}
         icon={Coffee}
       />
-      {/* 4. 总毛利 */}
-      <KPICard
-        title="总毛利"
-        value={`¥${Math.round(grossProfit).toLocaleString()}`}
-        subValue="扣除分成+运费"
-        icon={TrendingUp}
-      />
-      {/* 5. 留存/复购 */}
-      <RetentionCard />
-      {/* 6. 用户增长 */}
+      {/* 4. 今日复购 */}
+      <RepurchaseCard />
+      {/* 5. 用户增长 */}
       <KPICard
         title="用户增长"
         value="+156"
         trend={23.4}
         icon={UserPlus}
       />
-      {/* 7. SKU占比 - 占2列 */}
+      {/* 6. SKU占比 - 占2列 */}
       <SKUCard />
     </div>
   );
