@@ -1,8 +1,14 @@
 import { Link } from "react-router-dom";
-import { Box, FileText, BarChart3, ClipboardList, Truck } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Box, FileText, BarChart3, ClipboardList, Truck, Package } from "lucide-react";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const supplyModules = [
+  {
+    title: "SKU 主数据",
+    description: "管理产品与原物料基础信息",
+    icon: Package,
+    path: "/supply/sku",
+  },
   {
     title: "BOM 配方配置",
     description: "定义 SKU 与原料的消耗关系",

@@ -10,6 +10,7 @@ import Users from "./pages/Users";
 import Merchants from "./pages/Merchants";
 import Supply from "./pages/Supply";
 import SupplyBOM from "./pages/SupplyBOM";
+import SupplySKU from "./pages/SupplySKU";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -61,6 +62,14 @@ const App = () => (
             element={
               <CommandLayout>
                 <SupplyBOM />
+              </CommandLayout>
+            }
+          />
+          <Route
+            path="/supply/sku"
+            element={
+              <CommandLayout>
+                <SupplySKU />
               </CommandLayout>
             }
           />
