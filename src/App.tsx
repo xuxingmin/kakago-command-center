@@ -15,7 +15,7 @@ import SupplyDashboard from "./pages/SupplyDashboard";
 import SupplyRequest from "./pages/SupplyRequest";
 import SupplyPush from "./pages/SupplyPush";
 import SupplyAdjust from "./pages/SupplyAdjust";
-import DataHub from "./pages/DataHub";
+
 import MasterData from "./pages/MasterData";
 import Finance from "./pages/Finance";
 import SettingsPage from "./pages/SettingsPage";
@@ -124,14 +124,6 @@ const App = () => (
             element={
               <CommandLayout>
                 <SettingsPage />
-              </CommandLayout>
-            }
-          />
-          <Route
-            path="/data-hub"
-            element={
-              <CommandLayout>
-                <DataHub />
               </CommandLayout>
             }
           />
