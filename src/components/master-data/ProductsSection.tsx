@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Plus, Pencil, Coffee, Package, AlertTriangle, Check } from "lucide-react";
@@ -16,7 +16,12 @@ import { toast } from "sonner";
 type Product = {
   id: string;
   name: string;
+  name_en: string | null;
   price: number;
+  spec_ml: number | null;
+  description: string | null;
+  attributes: string | null;
+  notes: string | null;
   is_active: boolean;
   image_url: string | null;
 };
@@ -148,9 +153,13 @@ function ProductDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(product?.name || "");
+  const [nameEn, setNameEn] = useState(product?.name_en || "");
   const [price, setPrice] = useState(product?.price?.toString() || "0");
+  const [specMl, setSpecMl] = useState(product?.spec_ml?.toString() || "");
+  const [description, setDescription] = useState(product?.description || "");
+  const [attributes, setAttributes] = useState(product?.attributes || "");
+  const [notes, setNotes] = useState(product?.notes || "");
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
-  const [imageUrl, setImageUrl] = useState(product?.image_url || "");
   const [error, setError] = useState("");
 
   const isEdit = !!product;
@@ -158,7 +167,7 @@ function ProductDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name.trim()) {
-        setError("产品名称不能为空");
+        setError("产品中文名称不能为空");
         throw new Error("验证失败");
       }
       if (existingNames.includes(name.trim())) {
@@ -169,9 +178,13 @@ function ProductDialog({
 
       const payload = {
         name: name.trim(),
+        name_en: nameEn.trim() || null,
         price: parseFloat(price) || 0,
+        spec_ml: specMl ? parseFloat(specMl) : null,
+        description: description.trim() || null,
+        attributes: attributes.trim() || null,
+        notes: notes.trim() || null,
         is_active: isActive,
-        image_url: imageUrl.trim() || null,
       };
 
       if (isEdit) {
@@ -189,9 +202,13 @@ function ProductDialog({
       setOpen(false);
       if (!isEdit) {
         setName("");
+        setNameEn("");
         setPrice("0");
+        setSpecMl("");
+        setDescription("");
+        setAttributes("");
+        setNotes("");
         setIsActive(true);
-        setImageUrl("");
       }
     },
     onError: (err: any) => {
@@ -215,44 +232,87 @@ function ProductDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bg-card border-border">
+      <DialogContent className="bg-card border-border max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "编辑产品" : "新增产品"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label>产品名称 *</Label>
-            <Input 
-              value={name} 
-              onChange={(e) => { setName(e.target.value); setError(""); }}
-              placeholder="如：生椰拿铁" 
-              className={`bg-background border-border ${error ? 'border-destructive' : ''}`}
-            />
-            {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>产品中文名称 *</Label>
+              <Input 
+                value={name} 
+                onChange={(e) => { setName(e.target.value); setError(""); }}
+                placeholder="如：生椰拿铁" 
+                className={`bg-background border-border ${error ? 'border-destructive' : ''}`}
+              />
+              {error && <p className="text-xs text-destructive">{error}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>英文名称</Label>
+              <Input 
+                value={nameEn} 
+                onChange={(e) => setNameEn(e.target.value)}
+                placeholder="e.g. Coconut Latte" 
+                className="bg-background border-border"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>售价 (¥) *</Label>
+              <Input 
+                type="number" 
+                value={price} 
+                onChange={(e) => setPrice(e.target.value)} 
+                placeholder="0.00" 
+                className="bg-background border-border" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>产品规格 (ml)</Label>
+              <Input 
+                type="number" 
+                value={specMl} 
+                onChange={(e) => setSpecMl(e.target.value)} 
+                placeholder="如：350" 
+                className="bg-background border-border" 
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label>售价 *</Label>
+            <Label>产品介绍</Label>
+            <Textarea 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              placeholder="描述产品的特色、口味、原料等..."
+              className="bg-background border-border min-h-[80px]" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>产品属性</Label>
             <Input 
-              type="number" 
-              value={price} 
-              onChange={(e) => setPrice(e.target.value)} 
-              placeholder="0.00" 
+              value={attributes} 
+              onChange={(e) => setAttributes(e.target.value)} 
+              placeholder="如：冷饮、热饮、含咖啡因" 
               className="bg-background border-border" 
             />
           </div>
 
           <div className="space-y-2">
-            <Label>图片链接</Label>
-            <Input 
-              value={imageUrl} 
-              onChange={(e) => setImageUrl(e.target.value)} 
-              placeholder="https://..." 
-              className="bg-background border-border" 
+            <Label>产品备注</Label>
+            <Textarea 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)} 
+              placeholder="内部备注信息..."
+              className="bg-background border-border min-h-[60px]" 
             />
           </div>
 
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-2 border-t border-border pt-4">
             <Label>上架状态</Label>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>

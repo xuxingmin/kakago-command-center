@@ -222,30 +222,45 @@ export type Database = {
       }
       sku_products: {
         Row: {
+          attributes: string | null
           created_at: string
+          description: string | null
           id: string
           image_url: string | null
           is_active: boolean
           name: string
+          name_en: string | null
+          notes: string | null
           price: number
+          spec_ml: number | null
           updated_at: string
         }
         Insert: {
+          attributes?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           name: string
+          name_en?: string | null
+          notes?: string | null
           price?: number
+          spec_ml?: number | null
           updated_at?: string
         }
         Update: {
+          attributes?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           name?: string
+          name_en?: string | null
+          notes?: string | null
           price?: number
+          spec_ml?: number | null
           updated_at?: string
         }
         Relationships: []
