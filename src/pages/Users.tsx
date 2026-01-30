@@ -77,7 +77,7 @@ export default function Users() {
       </section>
 
       {/* Row 4: 用户特征 - 40% */}
-      <section className="h-[40%] min-h-[200px] grid gap-4" style={{ gridTemplateColumns: '20% 30% 30% 20%' }}>
+      <section className="h-[40%] min-h-[200px] grid gap-4" style={{ gridTemplateColumns: '15% 20% 25% 40%' }}>
         <GenderCard />
         <RegionCard />
         <TimeSlotCard />
