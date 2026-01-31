@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Activity, Coffee, Truck, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStores, getRandomStoreName } from "@/hooks/use-stores";
 
-// 模拟订单数据生成
-const stores = ["朝阳大悦城店", "国贸CBD店", "三里屯店", "望京SOHO店", "中关村店", "西单大悦城店", "王府井店"];
 const statuses = [
   { label: "制作中", icon: Coffee, color: "text-yellow-400" },
   { label: "配送中", icon: Truck, color: "text-primary animate-pulse" },
@@ -14,38 +13,50 @@ function generateOrderId() {
   return `KK${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
 }
 
-function generateOrder() {
-  const status = statuses[Math.floor(Math.random() * statuses.length)];
-  return {
-    id: generateOrderId(),
-    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    store: stores[Math.floor(Math.random() * stores.length)],
-    status,
-  };
+interface Order {
+  id: string;
+  time: string;
+  store: string;
+  status: typeof statuses[0];
 }
 
-// 初始订单列表
-const initialOrders = Array.from({ length: 15 }, () => ({
-  ...generateOrder(),
-  time: new Date(Date.now() - Math.random() * 300000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-}));
-
 export function OrderStream() {
-  const [orders, setOrders] = useState(initialOrders);
+  const { stores, activeStores } = useStores();
+  const [orders, setOrders] = useState<Order[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
 
-  // 自动添加新订单
+  // 初始化订单（使用真实门店名称）
   useEffect(() => {
+    if (activeStores.length > 0 && orders.length === 0) {
+      const initialOrders = Array.from({ length: 15 }, () => ({
+        id: generateOrderId(),
+        time: new Date(Date.now() - Math.random() * 300000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        store: getRandomStoreName(activeStores),
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+      }));
+      setOrders(initialOrders);
+    }
+  }, [activeStores, orders.length]);
+
+  // 自动添加新订单（使用真实门店名称）
+  useEffect(() => {
+    if (activeStores.length === 0) return;
+
     const interval = setInterval(() => {
       setOrders(prev => {
-        const newOrders = [generateOrder(), ...prev.slice(0, 29)];
-        return newOrders;
+        const newOrder: Order = {
+          id: generateOrderId(),
+          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          store: getRandomStoreName(activeStores),
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+        };
+        return [newOrder, ...prev.slice(0, 29)];
       });
     }, 2500 + Math.random() * 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeStores]);
 
   // 自动滚动效果
   useEffect(() => {

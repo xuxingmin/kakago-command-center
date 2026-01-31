@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, Volume2, VolumeX, Clock, Package, XCircle } from "lucide-react";
+import { AlertTriangle, Volume2, VolumeX, Clock, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useStores, getRandomStoreName } from "@/hooks/use-stores";
 
 type AlertType = "order" | "supply";
 
@@ -14,64 +15,90 @@ interface Alert {
   severity: "high" | "medium";
 }
 
-// 模拟预警数据
-const initialAlerts: Alert[] = [
-  {
-    id: "1",
-    type: "order",
-    title: "订单超时未接",
-    detail: "王府井店 · 订单 KK20241205 已等待 4分12秒",
-    time: "14:32:18",
-    severity: "high",
-  },
-  {
-    id: "2",
-    type: "supply",
-    title: "原料产能预警",
-    detail: "三里屯店 · 咖啡豆存量仅支撑 18 杯",
-    time: "14:28:05",
-    severity: "high",
-  },
-  {
-    id: "3",
-    type: "order",
-    title: "配送超时预警",
-    detail: "国贸CBD店 · 配送已超时 8分钟",
-    time: "14:25:33",
-    severity: "medium",
-  },
-  {
-    id: "4",
-    type: "supply",
-    title: "杯具库存不足",
-    detail: "望京SOHO店 · 16oz杯剩余 15 个",
-    time: "14:20:41",
-    severity: "medium",
-  },
-  {
-    id: "5",
-    type: "order",
-    title: "异常取消申请",
-    detail: "中关村店 · 用户申请退款 ¥28.00",
-    time: "14:18:22",
-    severity: "medium",
-  },
-];
+const alertTemplates = {
+  order: [
+    { title: "订单超时未接", detail: (store: string) => `${store} · 订单等待超过 3 分钟` },
+    { title: "配送超时预警", detail: (store: string) => `${store} · 配送已超时 8 分钟` },
+    { title: "异常取消申请", detail: (store: string) => `${store} · 用户申请退款 ¥28.00` },
+  ],
+  supply: [
+    { title: "原料产能预警", detail: (store: string) => `${store} · 咖啡豆存量仅支撑 18 杯` },
+    { title: "杯具库存不足", detail: (store: string) => `${store} · 16oz杯剩余 15 个` },
+    { title: "牛奶库存预警", detail: (store: string) => `${store} · 鲜奶仅剩 2 盒` },
+  ],
+};
 
 export function ExceptionMonitor() {
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const { activeStores } = useStores();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [newAlertFlash, setNewAlertFlash] = useState(false);
 
-  // 模拟新报警
+  // 初始化预警数据（使用真实门店）
   useEffect(() => {
+    if (activeStores.length > 0 && alerts.length === 0) {
+      const initialAlerts: Alert[] = [
+        {
+          id: "1",
+          type: "order",
+          title: "订单超时未接",
+          detail: `${getRandomStoreName(activeStores)} · 订单 KK20241205 已等待 4分12秒`,
+          time: "14:32:18",
+          severity: "high",
+        },
+        {
+          id: "2",
+          type: "supply",
+          title: "原料产能预警",
+          detail: `${getRandomStoreName(activeStores)} · 咖啡豆存量仅支撑 18 杯`,
+          time: "14:28:05",
+          severity: "high",
+        },
+        {
+          id: "3",
+          type: "order",
+          title: "配送超时预警",
+          detail: `${getRandomStoreName(activeStores)} · 配送已超时 8分钟`,
+          time: "14:25:33",
+          severity: "medium",
+        },
+        {
+          id: "4",
+          type: "supply",
+          title: "杯具库存不足",
+          detail: `${getRandomStoreName(activeStores)} · 16oz杯剩余 15 个`,
+          time: "14:20:41",
+          severity: "medium",
+        },
+        {
+          id: "5",
+          type: "order",
+          title: "异常取消申请",
+          detail: `${getRandomStoreName(activeStores)} · 用户申请退款 ¥28.00`,
+          time: "14:18:22",
+          severity: "medium",
+        },
+      ];
+      setAlerts(initialAlerts);
+    }
+  }, [activeStores, alerts.length]);
+
+  // 模拟新报警（使用真实门店）
+  useEffect(() => {
+    if (activeStores.length === 0) return;
+
     const interval = setInterval(() => {
       if (Math.random() > 0.7) {
+        const type: AlertType = Math.random() > 0.5 ? "order" : "supply";
+        const templates = alertTemplates[type];
+        const template = templates[Math.floor(Math.random() * templates.length)];
+        const storeName = getRandomStoreName(activeStores);
+
         const newAlert: Alert = {
           id: Date.now().toString(),
-          type: Math.random() > 0.5 ? "order" : "supply",
-          title: Math.random() > 0.5 ? "订单超时未接" : "原料产能预警",
-          detail: `${["朝阳大悦城店", "西单大悦城店", "五道口店"][Math.floor(Math.random() * 3)]} · 新预警事件`,
+          type,
+          title: template.title,
+          detail: template.detail(storeName),
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
           severity: Math.random() > 0.5 ? "high" : "medium",
         };
@@ -83,7 +110,7 @@ export function ExceptionMonitor() {
     }, 8000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeStores]);
 
   const highSeverityCount = alerts.filter(a => a.severity === "high").length;
 

@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Coffee, DollarSign, Users, Store, UserPlus, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStores } from "@/hooks/use-stores";
 
 // SKU 占比数据 - 6种SKU with distinct colors
 const skuData = [
@@ -55,7 +57,28 @@ function KPICard({ title, value, subValue, trend, icon: Icon }: KPICardProps) {
   );
 }
 
-function MerchantCard() {
+function MerchantCard({ activeCount, totalCount }: { activeCount: number; totalCount: number }) {
+  const [displayActive, setDisplayActive] = useState(0);
+  const [displayTotal, setDisplayTotal] = useState(0);
+
+  // 滚动动画
+  useEffect(() => {
+    const duration = 1000;
+    const steps = 20;
+    const stepTime = duration / steps;
+    
+    let currentStep = 0;
+    const timer = setInterval(() => {
+      currentStep++;
+      setDisplayActive(Math.round((activeCount * currentStep) / steps));
+      setDisplayTotal(Math.round((totalCount * currentStep) / steps));
+      
+      if (currentStep >= steps) clearInterval(timer);
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [activeCount, totalCount]);
+
   return (
     <div
       className={cn(
@@ -68,8 +91,8 @@ function MerchantCard() {
         <Store className="w-3.5 h-3.5 text-[#9CA3AF]" />
       </div>
       <div className="flex items-baseline gap-0.5">
-        <span className="font-mono text-xl font-extrabold text-white tabular-nums">42</span>
-        <span className="font-mono text-lg text-[#9CA3AF] tabular-nums">/68</span>
+        <span className="font-mono text-xl font-extrabold text-white tabular-nums">{displayActive}</span>
+        <span className="font-mono text-lg text-[#9CA3AF] tabular-nums">/{displayTotal}</span>
       </div>
       <span className="text-xs text-[#9CA3AF] mt-1">在线/注册</span>
     </div>
@@ -129,12 +152,13 @@ function RepurchaseCard() {
 }
 
 export function KPIGrid() {
+  const { activeCount, totalCount } = useStores();
   const todayRevenue = 128450;
 
   return (
     <div className="grid grid-cols-7 gap-3">
-      {/* 1. 营业商户 */}
-      <MerchantCard />
+      {/* 1. 营业商户 - 使用真实数据 */}
+      <MerchantCard activeCount={activeCount} totalCount={totalCount} />
       {/* 2. 今日营收 */}
       <KPICard
         title="今日营收"
