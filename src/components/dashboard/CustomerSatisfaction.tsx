@@ -1,12 +1,22 @@
+import { useState, useEffect } from "react";
 import { Star, MessageSquare, ThumbsUp, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Review {
-  id: number;
+  id: string;
   user: string;
   rating: number;
   comment: string;
   time: string;
+}
+
+interface DBReview {
+  id: string;
+  customer_name: string | null;
+  rating: number;
+  comment: string | null;
+  created_at: string;
 }
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
@@ -26,11 +36,58 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
 }
 
 export function CustomerSatisfaction() {
-  // 空数据 - 等待接入真实评价系统
-  const recentReviews: Review[] = [];
-  const avgRating = 0;
-  const totalReviews = 0;
-  const positiveRate = 0;
+  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [positiveRate, setPositiveRate] = useState(0);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { data } = await supabase
+        .from("reviews")
+        .select("*")
+        .gte("created_at", today.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (data && data.length > 0) {
+        const reviews: Review[] = (data as DBReview[]).map((r) => ({
+          id: r.id,
+          user: r.customer_name || "匿名",
+          rating: r.rating,
+          comment: r.comment || "",
+          time: new Date(r.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+        }));
+        
+        setRecentReviews(reviews.slice(0, 5));
+        setTotalReviews(data.length);
+        
+        const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
+        setAvgRating(Math.round(avg * 10) / 10);
+        
+        const positive = data.filter((r) => r.rating >= 4).length;
+        setPositiveRate(Math.round((positive / data.length) * 100));
+      } else {
+        setRecentReviews([]);
+        setTotalReviews(0);
+        setAvgRating(0);
+        setPositiveRate(0);
+      }
+    };
+
+    fetchReviews();
+
+    const channel = supabase
+      .channel("reviews-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "reviews" }, () => {
+        fetchReviews();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   return (
     <div className="bg-card border border-secondary rounded-lg p-4 h-full flex flex-col">

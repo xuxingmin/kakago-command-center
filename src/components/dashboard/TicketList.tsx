@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Headphones, AlertCircle, Clock, CheckCircle, User, ChevronDown, ChevronUp, MessageSquare, Phone, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type Urgency = "high" | "medium" | "low";
 type Status = "pending" | "processing" | "completed";
@@ -18,6 +19,19 @@ interface Ticket {
   order: string;
 }
 
+interface DBTicket {
+  id: string;
+  ticket_no: string;
+  type: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  created_at: string;
+  stores: { name: string } | null;
+  orders: { order_no: string; customer_name: string | null; customer_phone: string | null } | null;
+}
+
 const urgencyConfig: Record<Urgency, { label: string; color: string; bg: string }> = {
   high: { label: "高", color: "text-destructive", bg: "bg-destructive/20" },
   medium: { label: "中", color: "text-warning", bg: "bg-warning/20" },
@@ -31,8 +45,47 @@ const statusConfig: Record<Status, { label: string; color: string; icon: React.E
 };
 
 export function TicketList() {
-  // 空数据 - 等待接入真实工单系统
-  const [tickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data } = await supabase
+        .from("tickets")
+        .select("*, stores(name), orders(order_no, customer_name, customer_phone)")
+        .gte("created_at", today.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (data) {
+        const mapped: Ticket[] = (data as unknown as DBTicket[]).map((t) => ({
+          id: t.id,
+          user: t.orders?.customer_name || "匿名用户",
+          phone: t.orders?.customer_phone || "-",
+          type: t.title,
+          urgency: (t.priority === "high" ? "high" : t.priority === "low" ? "low" : "medium") as Urgency,
+          status: (t.status === "resolved" ? "completed" : t.status === "processing" ? "processing" : "pending") as Status,
+          time: new Date(t.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+          detail: t.description || "",
+          order: t.orders?.order_no || t.ticket_no,
+        }));
+        setTickets(mapped);
+      }
+    };
+
+    fetchTickets();
+
+    // 实时订阅
+    const channel = supabase
+      .channel("tickets-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => {
+        fetchTickets();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const pendingCount = tickets.filter(t => t.status === "pending").length;
