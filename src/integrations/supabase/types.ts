@@ -117,6 +117,7 @@ export type Database = {
           store_id: string
           total_amount: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -130,6 +131,7 @@ export type Database = {
           store_id: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -143,6 +145,7 @@ export type Database = {
           store_id?: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -153,6 +156,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          nickname: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       restock_batches: {
         Row: {
@@ -243,6 +276,7 @@ export type Database = {
           order_id: string | null
           rating: number
           store_id: string
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
@@ -252,6 +286,7 @@ export type Database = {
           order_id?: string | null
           rating: number
           store_id: string
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
@@ -261,6 +296,7 @@ export type Database = {
           order_id?: string | null
           rating?: number
           store_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
