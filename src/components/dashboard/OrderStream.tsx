@@ -1,62 +1,83 @@
 import { useEffect, useState, useRef } from "react";
-import { Activity, Coffee, Truck, CheckCircle } from "lucide-react";
+import { Activity, Coffee, Truck, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStores, getRandomStoreName } from "@/hooks/use-stores";
+import { supabase } from "@/integrations/supabase/client";
 
-const statuses = [
-  { label: "制作中", icon: Coffee, color: "text-yellow-400" },
-  { label: "配送中", icon: Truck, color: "text-primary animate-pulse" },
-  { label: "已送达", icon: CheckCircle, color: "text-success" },
-];
-
-function generateOrderId() {
-  return `KK${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
-}
-
-interface Order {
+interface OrderWithStore {
   id: string;
-  time: string;
-  store: string;
-  status: typeof statuses[0];
+  order_no: string;
+  status: string;
+  created_at: string;
+  store_name: string;
 }
+
+const statusConfig: Record<string, { label: string; icon: typeof Coffee; color: string }> = {
+  pending: { label: "待接单", icon: Clock, color: "text-orange-400" },
+  making: { label: "制作中", icon: Coffee, color: "text-yellow-400" },
+  delivering: { label: "配送中", icon: Truck, color: "text-primary animate-pulse" },
+  completed: { label: "已完成", icon: CheckCircle, color: "text-success" },
+  cancelled: { label: "已取消", icon: Clock, color: "text-muted-foreground" },
+};
 
 export function OrderStream() {
-  const { stores, activeStores } = useStores();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderWithStore[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
 
-  // 初始化订单（使用真实门店名称）
-  useEffect(() => {
-    if (activeStores.length > 0 && orders.length === 0) {
-      const initialOrders = Array.from({ length: 15 }, () => ({
-        id: generateOrderId(),
-        time: new Date(Date.now() - Math.random() * 300000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        store: getRandomStoreName(activeStores),
-        status: statuses[Math.floor(Math.random() * statuses.length)],
+  // 获取订单列表
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        order_no,
+        status,
+        created_at,
+        stores!inner(name)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (!error && data) {
+      const formatted = data.map((order: any) => ({
+        id: order.id,
+        order_no: order.order_no,
+        status: order.status,
+        created_at: order.created_at,
+        store_name: order.stores?.name || "未知门店",
       }));
-      setOrders(initialOrders);
+      setOrders(formatted);
     }
-  }, [activeStores, orders.length]);
+  };
 
-  // 自动添加新订单（使用真实门店名称）
+  // 初始化加载
   useEffect(() => {
-    if (activeStores.length === 0) return;
+    fetchOrders();
+  }, []);
 
-    const interval = setInterval(() => {
-      setOrders(prev => {
-        const newOrder: Order = {
-          id: generateOrderId(),
-          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          store: getRandomStoreName(activeStores),
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-        };
-        return [newOrder, ...prev.slice(0, 29)];
-      });
-    }, 2500 + Math.random() * 2000);
+  // Realtime 订阅
+  useEffect(() => {
+    const channel = supabase
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        async (payload) => {
+          console.log("Order change:", payload);
+          // 重新获取最新数据
+          await fetchOrders();
+        }
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
-  }, [activeStores]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // 自动滚动效果
   useEffect(() => {
@@ -64,6 +85,14 @@ export function OrderStream() {
       scrollRef.current.scrollTop = 0;
     }
   }, [orders, isAutoScroll]);
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
 
   return (
     <div className="bg-card border border-secondary rounded-lg p-3 h-full flex flex-col">
@@ -81,54 +110,61 @@ export function OrderStream() {
         </div>
       </div>
 
-      {/* 订单列表 - 黑客帝国风格 */}
-      <div 
+      {/* 订单列表 */}
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-1 scrollbar-thin"
         onMouseEnter={() => setIsAutoScroll(false)}
         onMouseLeave={() => setIsAutoScroll(true)}
       >
-        {orders.map((order, index) => {
-          const StatusIcon = order.status.icon;
-          return (
-            <div
-              key={`${order.id}-${index}`}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-300",
-                "bg-background/50 hover:bg-primary/10 border border-transparent hover:border-primary/30",
-                index === 0 && "animate-fade-in bg-primary/5 border-primary/20"
-              )}
-            >
-              {/* 时间 */}
-              <span className="numeric text-muted-foreground w-16 flex-shrink-0">
-                {order.time}
-              </span>
-              
-              {/* 订单号 */}
-              <span className="numeric text-primary/80 w-24 flex-shrink-0 truncate">
-                {order.id}
-              </span>
-              
-              {/* 门店 */}
-              <span className="text-foreground/70 flex-1 truncate">
-                {order.store}
-              </span>
-              
-              {/* 状态 */}
-              <div className={cn("flex items-center gap-1 flex-shrink-0", order.status.color)}>
-                <StatusIcon className="w-3 h-3" />
-                <span className="text-[10px]">{order.status.label}</span>
+        {orders.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            暂无订单数据，等待新订单...
+          </div>
+        ) : (
+          orders.map((order, index) => {
+            const status = statusConfig[order.status] || statusConfig.pending;
+            const StatusIcon = status.icon;
+            return (
+              <div
+                key={order.id}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-300",
+                  "bg-background/50 hover:bg-primary/10 border border-transparent hover:border-primary/30",
+                  index === 0 && "animate-fade-in bg-primary/5 border-primary/20"
+                )}
+              >
+                {/* 时间 */}
+                <span className="numeric text-muted-foreground w-16 flex-shrink-0">
+                  {formatTime(order.created_at)}
+                </span>
+
+                {/* 订单号 */}
+                <span className="numeric text-primary/80 w-28 flex-shrink-0 truncate">
+                  {order.order_no}
+                </span>
+
+                {/* 门店 */}
+                <span className="text-foreground/70 flex-1 truncate">
+                  {order.store_name}
+                </span>
+
+                {/* 状态 */}
+                <div className={cn("flex items-center gap-1 flex-shrink-0", status.color)}>
+                  <StatusIcon className="w-3 h-3" />
+                  <span className="text-[10px]">{status.label}</span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* 底部状态 */}
       <div className="flex-shrink-0 pt-2 border-t border-border mt-2">
         <div className="flex justify-between text-[10px] text-muted-foreground">
-          <span>悬停暂停滚动</span>
-          <span className="numeric">更新: {new Date().toLocaleTimeString('zh-CN')}</span>
+          <span>实时同步中 · 悬停暂停滚动</span>
+          <span className="numeric">更新: {new Date().toLocaleTimeString("zh-CN")}</span>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, Volume2, VolumeX, Clock, Package } from "lucide-react";
+import { AlertTriangle, Volume2, VolumeX, Clock, Package, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useStores, getRandomStoreName } from "@/hooks/use-stores";
+import { supabase } from "@/integrations/supabase/client";
 
 type AlertType = "order" | "supply";
 
@@ -15,102 +15,104 @@ interface Alert {
   severity: "high" | "medium";
 }
 
-const alertTemplates = {
-  order: [
-    { title: "订单超时未接", detail: (store: string) => `${store} · 订单等待超过 3 分钟` },
-    { title: "配送超时预警", detail: (store: string) => `${store} · 配送已超时 8 分钟` },
-    { title: "异常取消申请", detail: (store: string) => `${store} · 用户申请退款 ¥28.00` },
-  ],
-  supply: [
-    { title: "原料产能预警", detail: (store: string) => `${store} · 咖啡豆存量仅支撑 18 杯` },
-    { title: "杯具库存不足", detail: (store: string) => `${store} · 16oz杯剩余 15 个` },
-    { title: "牛奶库存预警", detail: (store: string) => `${store} · 鲜奶仅剩 2 盒` },
-  ],
-};
-
 export function ExceptionMonitor() {
-  const { activeStores } = useStores();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [newAlertFlash, setNewAlertFlash] = useState(false);
 
-  // 初始化预警数据（使用真实门店）
+  // 获取订单预警（待接单超过3分钟）
+  const fetchOrderAlerts = async () => {
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    
+    const { data: pendingOrders } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        order_no,
+        created_at,
+        stores!inner(name)
+      `)
+      .eq("status", "pending")
+      .lt("created_at", threeMinutesAgo)
+      .order("created_at", { ascending: true })
+      .limit(5);
+
+    const orderAlerts: Alert[] = (pendingOrders || []).map((order: any) => {
+      const waitMinutes = Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000);
+      return {
+        id: `order-${order.id}`,
+        type: "order" as AlertType,
+        title: "订单超时未接",
+        detail: `${order.stores?.name || "未知门店"} · 订单 ${order.order_no} 已等待 ${waitMinutes}分钟`,
+        time: new Date(order.created_at).toLocaleTimeString("zh-CN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        severity: waitMinutes > 5 ? "high" : "medium",
+      };
+    });
+
+    // 获取库存预警
+    const { data: lowInventory } = await supabase
+      .from("store_inventory")
+      .select(`
+        id,
+        current_quantity,
+        stores!inner(name),
+        sku_materials!inner(name)
+      `)
+      .lt("current_quantity", 20)
+      .limit(5);
+
+    const supplyAlerts: Alert[] = (lowInventory || []).map((inv: any) => ({
+      id: `supply-${inv.id}`,
+      type: "supply" as AlertType,
+      title: "原料库存预警",
+      detail: `${inv.stores?.name || "未知门店"} · ${inv.sku_materials?.name || "物料"} 仅剩 ${inv.current_quantity}`,
+      time: new Date().toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+      severity: inv.current_quantity < 10 ? "high" : "medium",
+    }));
+
+    const allAlerts = [...orderAlerts, ...supplyAlerts].sort((a, b) => 
+      a.severity === "high" && b.severity !== "high" ? -1 : 1
+    );
+
+    setAlerts(allAlerts);
+  };
+
+  // 初始化加载
   useEffect(() => {
-    if (activeStores.length > 0 && alerts.length === 0) {
-      const initialAlerts: Alert[] = [
-        {
-          id: "1",
-          type: "order",
-          title: "订单超时未接",
-          detail: `${getRandomStoreName(activeStores)} · 订单 KK20241205 已等待 4分12秒`,
-          time: "14:32:18",
-          severity: "high",
-        },
-        {
-          id: "2",
-          type: "supply",
-          title: "原料产能预警",
-          detail: `${getRandomStoreName(activeStores)} · 咖啡豆存量仅支撑 18 杯`,
-          time: "14:28:05",
-          severity: "high",
-        },
-        {
-          id: "3",
-          type: "order",
-          title: "配送超时预警",
-          detail: `${getRandomStoreName(activeStores)} · 配送已超时 8分钟`,
-          time: "14:25:33",
-          severity: "medium",
-        },
-        {
-          id: "4",
-          type: "supply",
-          title: "杯具库存不足",
-          detail: `${getRandomStoreName(activeStores)} · 16oz杯剩余 15 个`,
-          time: "14:20:41",
-          severity: "medium",
-        },
-        {
-          id: "5",
-          type: "order",
-          title: "异常取消申请",
-          detail: `${getRandomStoreName(activeStores)} · 用户申请退款 ¥28.00`,
-          time: "14:18:22",
-          severity: "medium",
-        },
-      ];
-      setAlerts(initialAlerts);
-    }
-  }, [activeStores, alerts.length]);
-
-  // 模拟新报警（使用真实门店）
-  useEffect(() => {
-    if (activeStores.length === 0) return;
-
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        const type: AlertType = Math.random() > 0.5 ? "order" : "supply";
-        const templates = alertTemplates[type];
-        const template = templates[Math.floor(Math.random() * templates.length)];
-        const storeName = getRandomStoreName(activeStores);
-
-        const newAlert: Alert = {
-          id: Date.now().toString(),
-          type,
-          title: template.title,
-          detail: template.detail(storeName),
-          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          severity: Math.random() > 0.5 ? "high" : "medium",
-        };
-        
-        setAlerts(prev => [newAlert, ...prev.slice(0, 9)]);
-        setNewAlertFlash(true);
-        setTimeout(() => setNewAlertFlash(false), 1000);
-      }
-    }, 8000);
-
+    fetchOrderAlerts();
+    
+    // 定时刷新预警
+    const interval = setInterval(fetchOrderAlerts, 30000);
     return () => clearInterval(interval);
-  }, [activeStores]);
+  }, []);
+
+  // Realtime订阅订单变化
+  useEffect(() => {
+    const channel = supabase
+      .channel("alerts-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => {
+          fetchOrderAlerts();
+          setNewAlertFlash(true);
+          setTimeout(() => setNewAlertFlash(false), 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const highSeverityCount = alerts.filter(a => a.severity === "high").length;
 
@@ -151,55 +153,62 @@ export function ExceptionMonitor() {
         "flex-1 overflow-y-auto space-y-1.5 scrollbar-thin",
         newAlertFlash && "ring-1 ring-destructive/50 rounded"
       )}>
-        {alerts.map((alert, index) => (
-          <div
-            key={alert.id}
-            className={cn(
-              "relative px-2.5 py-2 rounded text-xs transition-all duration-300 overflow-hidden",
-              alert.severity === "high" 
-                ? "bg-gradient-to-r from-destructive/20 to-destructive/5 border border-destructive/30" 
-                : "bg-gradient-to-r from-warning/10 to-transparent border border-warning/20",
-              index === 0 && "animate-fade-in"
-            )}
-          >
-            {/* 高危呼吸光效 */}
-            {alert.severity === "high" && (
-              <div className="absolute inset-0 bg-destructive/10 animate-pulse pointer-events-none" />
-            )}
-            
-            <div className="relative flex items-start gap-2">
-              {/* 图标 */}
-              <div className={cn(
-                "mt-0.5 flex-shrink-0",
-                alert.severity === "high" ? "text-destructive" : "text-warning"
-              )}>
-                {alert.type === "order" ? (
-                  <Clock className="w-3.5 h-3.5" />
-                ) : (
-                  <Package className="w-3.5 h-3.5" />
-                )}
-              </div>
+        {alerts.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            <CheckCircle className="w-4 h-4 mr-2 text-success" />
+            暂无预警事件
+          </div>
+        ) : (
+          alerts.map((alert, index) => (
+            <div
+              key={alert.id}
+              className={cn(
+                "relative px-2.5 py-2 rounded text-xs transition-all duration-300 overflow-hidden",
+                alert.severity === "high" 
+                  ? "bg-gradient-to-r from-destructive/20 to-destructive/5 border border-destructive/30" 
+                  : "bg-gradient-to-r from-warning/10 to-transparent border border-warning/20",
+                index === 0 && "animate-fade-in"
+              )}
+            >
+              {/* 高危呼吸光效 */}
+              {alert.severity === "high" && (
+                <div className="absolute inset-0 bg-destructive/10 animate-pulse pointer-events-none" />
+              )}
               
-              {/* 内容 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className={cn(
-                    "font-medium",
-                    alert.severity === "high" ? "text-destructive" : "text-warning"
-                  )}>
-                    {alert.title}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground numeric flex-shrink-0">
-                    {alert.time}
-                  </span>
+              <div className="relative flex items-start gap-2">
+                {/* 图标 */}
+                <div className={cn(
+                  "mt-0.5 flex-shrink-0",
+                  alert.severity === "high" ? "text-destructive" : "text-warning"
+                )}>
+                  {alert.type === "order" ? (
+                    <Clock className="w-3.5 h-3.5" />
+                  ) : (
+                    <Package className="w-3.5 h-3.5" />
+                  )}
                 </div>
-                <p className="text-muted-foreground mt-0.5 truncate">
-                  {alert.detail}
-                </p>
+                
+                {/* 内容 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={cn(
+                      "font-medium",
+                      alert.severity === "high" ? "text-destructive" : "text-warning"
+                    )}>
+                      {alert.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground numeric flex-shrink-0">
+                      {alert.time}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground mt-0.5 truncate">
+                    {alert.detail}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* 底部统计 */}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Coffee, DollarSign, Users, Store, UserPlus, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStores } from "@/hooks/use-stores";
+import { useStores, useOrderStats } from "@/hooks/use-stores";
 
 // SKU 占比数据 - 6种SKU with distinct colors
 const skuData = [
@@ -153,25 +153,25 @@ function RepurchaseCard() {
 
 export function KPIGrid() {
   const { activeCount, totalCount } = useStores();
-  const todayRevenue = 128450;
+  const { todayCount, todayRevenue } = useOrderStats();
 
   return (
     <div className="grid grid-cols-7 gap-3">
       {/* 1. 营业商户 - 使用真实数据 */}
       <MerchantCard activeCount={activeCount} totalCount={totalCount} />
-      {/* 2. 今日营收 */}
+      {/* 2. 今日营收 - 使用真实订单数据 */}
       <KPICard
         title="今日营收"
         value={`¥${todayRevenue.toLocaleString()}`}
-        trend={12.5}
+        trend={todayRevenue > 0 ? 12.5 : 0}
         icon={DollarSign}
       />
-      {/* 3. 今日出杯 */}
+      {/* 3. 今日出杯 - 使用真实订单数据 */}
       <KPICard
         title="今日出杯"
-        value="12,405"
+        value={todayCount.toLocaleString()}
         subValue="杯"
-        trend={8.3}
+        trend={todayCount > 0 ? 8.3 : 0}
         icon={Coffee}
       />
       {/* 4. 今日复购 */}

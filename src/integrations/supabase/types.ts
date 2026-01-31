@@ -104,6 +104,56 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          items: Json
+          notes: string | null
+          order_no: string
+          status: Database["public"]["Enums"]["order_status"]
+          store_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_no: string
+          status?: Database["public"]["Enums"]["order_status"]
+          store_id: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_no?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          store_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restock_batches: {
         Row: {
           created_at: string
@@ -464,6 +514,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "merchant" | "public_user"
       material_category: "bean" | "milk" | "packaging" | "syrup" | "other"
+      order_status:
+        | "pending"
+        | "making"
+        | "delivering"
+        | "completed"
+        | "cancelled"
       restock_source: "system_calc" | "merchant_add" | "manual"
       restock_status:
         | "pending"
@@ -601,6 +657,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "merchant", "public_user"],
       material_category: ["bean", "milk", "packaging", "syrup", "other"],
+      order_status: [
+        "pending",
+        "making",
+        "delivering",
+        "completed",
+        "cancelled",
+      ],
       restock_source: ["system_calc", "merchant_add", "manual"],
       restock_status: [
         "pending",
