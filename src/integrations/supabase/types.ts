@@ -364,29 +364,50 @@ export type Database = {
       stores: {
         Row: {
           address: string | null
+          coffee_machine_model: string
           contact_phone: string | null
           created_at: string
+          grinder_model: string
+          head_barista: string
           id: string
+          latitude: number
+          longitude: number
           name: string
           status: Database["public"]["Enums"]["store_status"]
+          store_description: string
+          store_message: string
           updated_at: string
         }
         Insert: {
           address?: string | null
+          coffee_machine_model?: string
           contact_phone?: string | null
           created_at?: string
+          grinder_model?: string
+          head_barista?: string
           id?: string
+          latitude?: number
+          longitude?: number
           name: string
           status?: Database["public"]["Enums"]["store_status"]
+          store_description?: string
+          store_message?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
+          coffee_machine_model?: string
           contact_phone?: string | null
           created_at?: string
+          grinder_model?: string
+          head_barista?: string
           id?: string
+          latitude?: number
+          longitude?: number
           name?: string
           status?: Database["public"]["Enums"]["store_status"]
+          store_description?: string
+          store_message?: string
           updated_at?: string
         }
         Relationships: []
