@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { Store, Coffee, TrendingUp, Users } from "lucide-react";
+import { useStores } from "@/hooks/use-stores";
 
 const pageTitle: Record<string, string> = {
   "/dashboard": "作战室模块",
@@ -10,40 +11,41 @@ const pageTitle: Record<string, string> = {
   "/settings": "设置模块",
 };
 
-const metrics = [
-  {
-    label: "门店规模",
-    value: "42",
-    unit: "家",
-    icon: Store,
-    trend: "+3",
-  },
-  {
-    label: "累计销量",
-    value: "12,405",
-    unit: "杯",
-    icon: Coffee,
-    trend: "+128",
-  },
-  {
-    label: "平均毛利率",
-    value: "32.4",
-    unit: "%",
-    icon: TrendingUp,
-    trend: "+2.1%",
-  },
-  {
-    label: "30日留存",
-    value: "48.2",
-    unit: "%",
-    icon: Users,
-    trend: "+5.3%",
-  },
-];
-
 export function HUDHeader() {
   const location = useLocation();
   const title = pageTitle[location.pathname] || "KAKAGO 总部";
+  const { totalCount } = useStores();
+
+  const metrics = [
+    {
+      label: "门店规模",
+      value: totalCount.toLocaleString(),
+      unit: "家",
+      icon: Store,
+      trend: "+3",
+    },
+    {
+      label: "累计销量",
+      value: "12,405",
+      unit: "杯",
+      icon: Coffee,
+      trend: "+128",
+    },
+    {
+      label: "平均毛利率",
+      value: "32.4",
+      unit: "%",
+      icon: TrendingUp,
+      trend: "+2.1%",
+    },
+    {
+      label: "30日留存",
+      value: "48.2",
+      unit: "%",
+      icon: Users,
+      trend: "+5.3%",
+    },
+  ];
 
   return (
     <header className="h-16 bg-hud border-b border-hud-border flex items-center justify-between px-6">
