@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Clock, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -6,25 +6,35 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
-// 模拟门店数据（基于合肥主城区坐标）
-const storesData = [
-  { id: 1, name: "淮河路步行街店", x: 48, y: 42, orders: 156, hours: "07:00-22:00", status: "营业中" },
-  { id: 2, name: "万达广场店", x: 62, y: 38, orders: 128, hours: "08:00-22:00", status: "营业中" },
-  { id: 3, name: "银泰中心店", x: 55, y: 48, orders: 112, hours: "08:00-23:00", status: "营业中" },
-  { id: 4, name: "合肥南站店", x: 58, y: 72, orders: 103, hours: "06:00-23:00", status: "营业中" },
-  { id: 5, name: "政务区店", x: 35, y: 55, orders: 95, hours: "07:30-22:00", status: "营业中" },
-  { id: 6, name: "天鹅湖万达店", x: 32, y: 62, orders: 89, hours: "09:00-22:00", status: "营业中" },
-  { id: 7, name: "滨湖银泰店", x: 45, y: 82, orders: 78, hours: "09:00-21:00", status: "营业中" },
-  { id: 8, name: "包河万达店", x: 55, y: 65, orders: 67, hours: "08:00-21:00", status: "营业中" },
-  { id: 9, name: "蜀山万象城店", x: 28, y: 45, orders: 58, hours: "09:00-22:00", status: "营业中" },
-  { id: 10, name: "中科大店", x: 22, y: 52, orders: 45, hours: "07:00-22:00", status: "营业中" },
-  { id: 11, name: "庐阳万达店", x: 42, y: 28, orders: 42, hours: "08:00-21:00", status: "营业中" },
-  { id: 12, name: "瑶海万达店", x: 72, y: 35, orders: 34, hours: "08:00-20:00", status: "营业中" },
-  { id: 13, name: "新站高铁店", x: 78, y: 22, orders: 28, hours: "06:30-22:00", status: "营业中" },
-  { id: 14, name: "经开区店", x: 68, y: 75, orders: 23, hours: "08:00-20:00", status: "闭店" },
-  { id: 15, name: "肥西万达店", x: 18, y: 68, orders: 15, hours: "09:00-20:00", status: "闭店" },
-];
+type StoreData = Tables<"stores">;
+
+// 合肥主城区边界（用于坐标转换）
+const HEFEI_BOUNDS = {
+  minLng: 117.10,
+  maxLng: 117.45,
+  minLat: 31.72,
+  maxLat: 31.95,
+};
+
+// 将经纬度转换为地图百分比位置
+function coordToPercent(lng: number, lat: number): { x: number; y: number } {
+  const x = ((lng - HEFEI_BOUNDS.minLng) / (HEFEI_BOUNDS.maxLng - HEFEI_BOUNDS.minLng)) * 100;
+  // Y轴需要反转（纬度越大，Y越小）
+  const y = ((HEFEI_BOUNDS.maxLat - lat) / (HEFEI_BOUNDS.maxLat - HEFEI_BOUNDS.minLat)) * 100;
+  return { 
+    x: Math.max(5, Math.min(95, x)), 
+    y: Math.max(5, Math.min(95, y)) 
+  };
+}
+
+// 模拟订单数（后续可接入真实数据）
+function getMockOrders(storeId: string): number {
+  const hash = storeId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  return Math.floor((hash % 150) + 10);
+}
 
 function getNodeColor(orders: number): { bg: string; glow: string; label: string } {
   if (orders > 100) {
@@ -48,19 +58,22 @@ function getNodeColor(orders: number): { bg: string; glow: string; label: string
 }
 
 interface StoreNodeProps {
-  store: typeof storesData[0];
+  store: StoreData;
+  orders: number;
 }
 
-function StoreNode({ store }: StoreNodeProps) {
-  const { bg, glow, label } = getNodeColor(store.orders);
-  const isHighLoad = store.orders > 100;
+function StoreNode({ store, orders }: StoreNodeProps) {
+  const { bg, glow, label } = getNodeColor(orders);
+  const isHighLoad = orders > 100;
+  const { x, y } = coordToPercent(Number(store.longitude), Number(store.latitude));
+  const statusText = store.status === "active" ? "营业中" : store.status === "renovating" ? "装修中" : "闭店";
 
   return (
     <HoverCard openDelay={0} closeDelay={0}>
       <HoverCardTrigger asChild>
         <div
           className="absolute cursor-pointer group"
-          style={{ left: `${store.x}%`, top: `${store.y}%` }}
+          style={{ left: `${x}%`, top: `${y}%` }}
         >
           {/* 节点主体 */}
           <div
@@ -74,7 +87,7 @@ function StoreNode({ store }: StoreNodeProps) {
           />
           {/* 订单数标签 */}
           <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] numeric text-muted-foreground whitespace-nowrap">
-            {store.orders}
+            {orders}
           </span>
         </div>
       </HoverCardTrigger>
@@ -89,23 +102,23 @@ function StoreNode({ store }: StoreNodeProps) {
             <span className="font-medium text-sm">{store.name}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>{store.hours}</span>
+            <MapPin className="w-3 h-3" />
+            <span>{store.address || "暂无地址"}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className={cn(
               "text-xs px-2 py-0.5 rounded-full",
-              store.status === "营业中" 
+              store.status === "active" 
                 ? "bg-success/20 text-success" 
                 : "bg-muted text-muted-foreground"
             )}>
-              {store.status}
+              {statusText}
             </span>
             <span className={cn(
               "text-xs px-2 py-0.5 rounded-full",
               isHighLoad ? "bg-red-500/20 text-red-400" : "bg-muted text-muted-foreground"
             )}>
-              {label} · {store.orders}单
+              {label} · {orders}单
             </span>
           </div>
         </div>
@@ -115,9 +128,34 @@ function StoreNode({ store }: StoreNodeProps) {
 }
 
 export function StoreMap() {
-  const highLoadCount = storesData.filter(s => s.orders > 100).length;
-  const normalCount = storesData.filter(s => s.orders >= 30 && s.orders <= 100).length;
-  const lowLoadCount = storesData.filter(s => s.orders < 30).length;
+  const [stores, setStores] = useState<StoreData[]>([]);
+  const [storeOrders, setStoreOrders] = useState<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    async function fetchStores() {
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .neq("longitude", 0)
+        .neq("latitude", 0);
+
+      if (!error && data) {
+        setStores(data);
+        // 为每个门店生成模拟订单数
+        const ordersMap = new Map<string, number>();
+        data.forEach(store => {
+          ordersMap.set(store.id, getMockOrders(store.id));
+        });
+        setStoreOrders(ordersMap);
+      }
+    }
+    fetchStores();
+  }, []);
+
+  const getOrders = (storeId: string) => storeOrders.get(storeId) || 0;
+  const highLoadCount = stores.filter(s => getOrders(s.id) > 100).length;
+  const normalCount = stores.filter(s => { const o = getOrders(s.id); return o >= 30 && o <= 100; }).length;
+  const lowLoadCount = stores.filter(s => getOrders(s.id) < 30).length;
 
   return (
     <div className="bg-[#121212] border border-[#333333] rounded-lg p-3 h-full flex flex-col">
@@ -126,7 +164,7 @@ export function StoreMap() {
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">门店分布地图</span>
-          <span className="text-xs text-[#9CA3AF]">· 合肥主城区</span>
+          <span className="text-xs text-[#9CA3AF]">· 合肥主城区 ({stores.length}家)</span>
         </div>
         {/* 图例 */}
         <div className="flex items-center gap-3 text-xs">
@@ -229,8 +267,8 @@ export function StoreMap() {
         </svg>
 
         {/* 门店节点 */}
-        {storesData.map((store) => (
-          <StoreNode key={store.id} store={store} />
+        {stores.map((store) => (
+          <StoreNode key={store.id} store={store} orders={getOrders(store.id)} />
         ))}
 
         {/* 数据更新时间戳 */}
