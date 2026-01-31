@@ -234,6 +234,51 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_name: string | null
+          id: string
+          order_id: string | null
+          rating: number
+          store_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          order_id?: string | null
+          rating: number
+          store_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          order_id?: string | null
+          rating?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sku_materials: {
         Row: {
           category: Database["public"]["Enums"]["material_category"]
@@ -461,6 +506,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tickets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          store_id: string
+          ticket_no: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          store_id: string
+          ticket_no: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          store_id?: string
+          ticket_no?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
