@@ -1,14 +1,8 @@
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types";
 
-export interface StoreData {
-  id: string;
-  name: string;
-  status: "open" | "paused" | "closed";
-  address: string;
-  phone: string;
-  manager: string;
-}
+export type StoreData = Tables<"stores">;
 
 interface StoreBlockProps {
   store?: StoreData;
@@ -32,9 +26,9 @@ export function StoreBlock({ store, isAddButton, onClick }: StoreBlockProps) {
   if (!store) return null;
 
   const statusColor = {
-    open: "bg-green-500",
-    paused: "bg-gray-500",
-    closed: "bg-red-500",
+    active: "bg-green-500",
+    inactive: "bg-gray-500",
+    renovating: "bg-yellow-500",
   };
 
   return (
