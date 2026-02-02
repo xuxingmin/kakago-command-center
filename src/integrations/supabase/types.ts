@@ -53,6 +53,106 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          created_at: string | null
+          id: string
+          min_order: number | null
+          name: string
+          status: string | null
+          total_quota: number | null
+          type: Database["public"]["Enums"]["coupon_type"]
+          updated_at: string | null
+          used_count: number | null
+          valid_days: number | null
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          min_order?: number | null
+          name: string
+          status?: string | null
+          total_quota?: number | null
+          type: Database["public"]["Enums"]["coupon_type"]
+          updated_at?: string | null
+          used_count?: number | null
+          valid_days?: number | null
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          min_order?: number | null
+          name?: string
+          status?: string | null
+          total_quota?: number | null
+          type?: Database["public"]["Enums"]["coupon_type"]
+          updated_at?: string | null
+          used_count?: number | null
+          valid_days?: number | null
+          value?: number
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          direction: string
+          id: string
+          order_id: string | null
+          settlement_id: string | null
+          store_id: string | null
+          type: Database["public"]["Enums"]["financial_tx_type"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          direction: string
+          id?: string
+          order_id?: string | null
+          settlement_id?: string | null
+          store_id?: string | null
+          type: Database["public"]["Enums"]["financial_tx_type"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          direction?: string
+          id?: string
+          order_id?: string | null
+          settlement_id?: string | null
+          store_id?: string | null
+          type?: Database["public"]["Enums"]["financial_tx_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "settlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_logs: {
         Row: {
           created_at: string
@@ -106,6 +206,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          coupon_discount: number | null
+          coupon_id: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -120,6 +222,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          coupon_discount?: number | null
+          coupon_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -134,6 +238,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          coupon_discount?: number | null
+          coupon_id?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -148,6 +254,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_store_id_fkey"
             columns: ["store_id"]
@@ -308,6 +421,74 @@ export type Database = {
           },
           {
             foreignKeyName: "reviews_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlements: {
+        Row: {
+          confirmed_at: string | null
+          coupon_cost: number | null
+          coupon_count: number | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          order_count: number | null
+          order_total: number | null
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          platform_fee: number | null
+          platform_fee_rate: number | null
+          settlement_amount: number | null
+          status: Database["public"]["Enums"]["settlement_status"] | null
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          coupon_cost?: number | null
+          coupon_count?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_count?: number | null
+          order_total?: number | null
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          platform_fee?: number | null
+          platform_fee_rate?: number | null
+          settlement_amount?: number | null
+          status?: Database["public"]["Enums"]["settlement_status"] | null
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          coupon_cost?: number | null
+          coupon_count?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_count?: number | null
+          order_total?: number | null
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          platform_fee?: number | null
+          platform_fee_rate?: number | null
+          settlement_amount?: number | null
+          status?: Database["public"]["Enums"]["settlement_status"] | null
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlements_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -603,6 +784,67 @@ export type Database = {
           },
         ]
       }
+      user_coupons: {
+        Row: {
+          coupon_id: string
+          created_at: string | null
+          expire_at: string | null
+          id: string
+          received_at: string | null
+          status: Database["public"]["Enums"]["coupon_status"] | null
+          store_id: string | null
+          used_at: string | null
+          used_order_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string | null
+          expire_at?: string | null
+          id?: string
+          received_at?: string | null
+          status?: Database["public"]["Enums"]["coupon_status"] | null
+          store_id?: string | null
+          used_at?: string | null
+          used_order_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string | null
+          expire_at?: string | null
+          id?: string
+          received_at?: string | null
+          status?: Database["public"]["Enums"]["coupon_status"] | null
+          store_id?: string | null
+          used_at?: string | null
+          used_order_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_used_order_id_fkey"
+            columns: ["used_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -654,6 +896,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "merchant" | "public_user"
+      coupon_status: "active" | "used" | "expired"
+      coupon_type: "fixed" | "discount" | "freebie"
+      financial_tx_type:
+        | "order_revenue"
+        | "refund"
+        | "material_purchase"
+        | "store_settlement"
+        | "coupon_cost"
+        | "other_income"
+        | "other_expense"
       material_category: "bean" | "milk" | "packaging" | "syrup" | "other"
       order_status:
         | "pending"
@@ -668,6 +920,7 @@ export type Database = {
         | "shipped"
         | "received"
         | "cancelled"
+      settlement_status: "pending" | "confirmed" | "paid" | "completed"
       store_status: "active" | "inactive" | "renovating"
     }
     CompositeTypes: {
@@ -797,6 +1050,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "merchant", "public_user"],
+      coupon_status: ["active", "used", "expired"],
+      coupon_type: ["fixed", "discount", "freebie"],
+      financial_tx_type: [
+        "order_revenue",
+        "refund",
+        "material_purchase",
+        "store_settlement",
+        "coupon_cost",
+        "other_income",
+        "other_expense",
+      ],
       material_category: ["bean", "milk", "packaging", "syrup", "other"],
       order_status: [
         "pending",
@@ -813,6 +1077,7 @@ export const Constants = {
         "received",
         "cancelled",
       ],
+      settlement_status: ["pending", "confirmed", "paid", "completed"],
       store_status: ["active", "inactive", "renovating"],
     },
   },
