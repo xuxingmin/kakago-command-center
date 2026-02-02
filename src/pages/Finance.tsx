@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Wallet, ArrowDownLeft, ArrowUpRight, TrendingUp, FileText, Building2 } from "lucide-react";
+import { Wallet, ArrowDownLeft, ArrowUpRight, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FinanceKPIRow } from "@/components/finance/FinanceKPIRow";
 import { FundFlowPanel } from "@/components/finance/FundFlowPanel";
-import { RevenueMiniChart } from "@/components/finance/RevenueMiniChart";
+import { OperationTrendChart } from "@/components/finance/OperationTrendChart";
 import { SettlementStream } from "@/components/finance/SettlementStream";
-import { ARAPPanel } from "@/components/finance/ARAPPanel";
+import { FundPoolPanel } from "@/components/finance/FundPoolPanel";
+import { PayablesPanel } from "@/components/finance/PayablesPanel";
 
 type TabType = "overview" | "settlement";
 
@@ -62,19 +63,24 @@ export default function Finance() {
 
       {activeTab === "overview" ? (
         <>
-          {/* 中间行: 资金流 + 趋势图 */}
+          {/* 中间行: 资金流向(窄) + 经营趋势(宽60%) */}
           <div className="flex gap-2 flex-1 min-h-0">
-            <div className="w-[60%] h-full">
+            <div className="w-[40%] h-full">
               <FundFlowPanel />
             </div>
-            <div className="w-[40%] h-full">
-              <RevenueMiniChart />
+            <div className="w-[60%] h-full">
+              <OperationTrendChart />
             </div>
           </div>
 
-          {/* 底部行: 应收应付 */}
-          <div className="h-[140px] flex-shrink-0">
-            <ARAPPanel />
+          {/* 底部行: 沉淀资金(20%) + 应付款项(80%) */}
+          <div className="h-[160px] flex-shrink-0 flex gap-2">
+            <div className="w-[20%]">
+              <FundPoolPanel />
+            </div>
+            <div className="w-[80%]">
+              <PayablesPanel />
+            </div>
           </div>
         </>
       ) : (
