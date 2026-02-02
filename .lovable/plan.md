@@ -1,266 +1,462 @@
 
-# 总部后台后端建设全景规划
 
-## 一、现状分析
+# 财务模块设计规划
 
-### 已完成的后端基础设施
-| 模块 | 数据表 | Edge Function | 实时订阅 | 状态 |
-|------|--------|---------------|----------|------|
-| 门店管理 | stores | - | - | 已完成 |
-| 订单系统 | orders | create-order | 已启用 | 基础完成 |
-| 工单系统 | tickets | - | 已启用 | 已完成 |
-| 评价系统 | reviews | - | 已启用 | 已完成 |
-| SKU/物料 | sku_products, sku_materials, bom_recipes | - | - | 已完成 |
-| 库存系统 | store_inventory, inventory_logs | - | - | 结构完成 |
-| 用户档案 | profiles, user_roles | - | - | 结构完成 |
-| 补货系统 | restock_batches, restock_items | - | - | 结构完成 |
+## 一、模块总览
 
-### 待建设的后端能力
-| 优先级 | 模块 | 问题 | 需要建设 |
-|--------|------|------|----------|
-| P0 | 订单-BOM联动 | 下单不扣减库存 | 自动消耗计算 |
-| P0 | 用户运营 | 全部硬编码数据 | 用户统计 API |
-| P1 | 认证系统 | 未实现 | 登录/注册流程 |
-| P1 | 积分系统 | 不存在 | 新建数据表+API |
-| P2 | 优惠券系统 | 不存在 | 新建数据表+API |
-| P2 | 财务模块 | 占位页面 | 报表聚合 API |
-| P3 | 消息推送 | 不存在 | 通知系统 |
+财务模块将提供完整的资金流可视化和门店结算管理功能，分为两大核心板块：
 
----
-
-## 二、后端建设分阶段计划
-
-### 阶段 1：订单履约闭环 (核心业务)
-
-**目标**: 下单自动扣减库存，实现真正的业务闭环
-
-**数据库改造**:
 ```text
-无需新建表，复用现有:
-- store_inventory (库存)
-- inventory_logs (日志)
-- bom_recipes (配方)
-```
-
-**Edge Function 升级**: `create-order`
-- 接收订单后，根据 BOM 配方计算物料消耗
-- 自动扣减对应门店的 store_inventory
-- 写入 inventory_logs 审计日志
-- 库存不足时返回错误提示
-
-**示意流程**:
-```text
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  C端下单    │───▸│ create-order│───▸│  库存扣减   │
-│  美式 x2    │    │  计算BOM    │    │ 咖啡豆 -36g │
-└─────────────┘    └─────────────┘    └─────────────┘
-                          │
-                          ▼
-                   ┌─────────────┐
-                   │ inventory_  │
-                   │ logs 记录   │
-                   └─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      财务模块 /finance                       │
+├───────────────────────────┬─────────────────────────────────┤
+│      财务经营看板          │         门店结算中心            │
+│  (实时资金流 + KPI指标)    │    (周期结算 + 对账管理)        │
+└───────────────────────────┴─────────────────────────────────┘
 ```
 
 ---
 
-### 阶段 2：用户运营后端
+## 二、财务经营看板设计
 
-**目标**: 用户统计页面接入真实数据
+### 2.1 顶部 KPI 指标卡片
 
-**新建数据表**:
-```text
-user_points (用户积分表)
-├── id: UUID
-├── user_id: UUID → auth.users
-├── balance: INTEGER (当前积分)
-├── lifetime_points: INTEGER (累计获得)
-└── updated_at: TIMESTAMPTZ
+| 指标 | 数据来源 | 计算逻辑 |
+|------|----------|----------|
+| 总营收 | orders.total_amount | SUM(已完成订单金额) |
+| 今日营收 | orders | 当日 completed 订单合计 |
+| 物料成本 | inventory_logs + sku_materials | 消耗量 x 单位成本 |
+| 毛利率 | 计算字段 | (营收 - 物料成本) / 营收 |
+| 应付门店 | settlements | 待结算金额合计 |
+| 优惠券投放成本 | user_coupons | 已核销券面额 x 50% |
 
-point_transactions (积分流水)
-├── id: UUID
-├── user_id: UUID
-├── amount: INTEGER (+/-)
-├── type: ENUM (earn_order, redeem, expire, bonus)
-├── reference_id: UUID (关联订单等)
-└── created_at: TIMESTAMPTZ
-```
-
-**新建 Edge Functions**:
-
-1. `get-user-stats` - 用户运营统计
-   - 总用户数 (COUNT profiles)
-   - 本周新增 (profiles.created_at > 7天前)
-   - 复购率 (订单数 >= 2 的用户占比)
-   - 平均客单价 (SUM(total_amount) / COUNT(orders))
-
-2. `get-user-segments` - 用户分层统计
-   - 新用户: profiles.created_at < 7天
-   - 活跃老客: 7天内有订单
-   - 沉睡用户: 15-30天无订单
-   - 流失用户: 30天+ 无订单
-
-3. `get-user-insights` - 用户画像
-   - 性别/区域分布 (需扩展 profiles 表)
-   - 购买时段分布 (聚合 orders.created_at)
-   - 口味偏好 (聚合 orders.items)
-
----
-
-### 阶段 3：认证与权限
-
-**目标**: 实现三端统一认证
-
-**认证流程**:
-```text
-┌────────────────┐
-│   C端小程序    │──┐
-└────────────────┘  │
-┌────────────────┐  │    ┌──────────────┐    ┌───────────────┐
-│   商家端App    │──┼───▸│ Supabase Auth│───▸│ user_roles    │
-└────────────────┘  │    │   统一认证   │    │ 角色判断      │
-┌────────────────┐  │    └──────────────┘    └───────────────┘
-│ 总部Command    │──┘
-└────────────────┘
-```
-
-**新建 Edge Functions**:
-
-1. `auth-register` - 用户注册
-   - 支持手机号/邮箱注册
-   - 自动创建 profiles 记录
-   - 默认赋予 public_user 角色
-
-2. `auth-merchant-login` - 商家登录
-   - 验证 user_roles 中的 merchant 角色
-   - 返回关联的 store_id
-
-3. `get-current-user` - 获取用户信息
-   - 返回 profile + roles + 积分余额
-
----
-
-### 阶段 4：优惠券系统
-
-**目标**: 支持总部一键投券、C端核销
-
-**新建数据表**:
-```text
-coupons (优惠券模板)
-├── id: UUID
-├── name: TEXT (券名称)
-├── type: ENUM (discount, fixed, freebie)
-├── value: NUMERIC (折扣值/抵扣金额)
-├── min_order: NUMERIC (满减门槛)
-├── valid_days: INTEGER (有效天数)
-├── target_segment: TEXT (目标人群)
-└── created_at: TIMESTAMPTZ
-
-user_coupons (用户券包)
-├── id: UUID
-├── user_id: UUID
-├── coupon_id: UUID → coupons
-├── status: ENUM (active, used, expired)
-├── received_at: TIMESTAMPTZ
-├── used_at: TIMESTAMPTZ
-├── used_order_id: UUID
-└── expire_at: TIMESTAMPTZ
-```
-
-**新建 Edge Functions**:
-
-1. `batch-send-coupons` - 批量发券
-   - 根据用户分层筛选目标用户
-   - 批量插入 user_coupons
-
-2. `redeem-coupon` - 核销优惠券
-   - 验证券有效性
-   - 更新状态为 used
-   - 关联 order_id
-
----
-
-### 阶段 5：财务报表
-
-**目标**: 财务模块数据驱动
-
-**新建 Edge Functions**:
-
-1. `get-finance-summary` - 财务概览
-   - 今日/本周/本月营收
-   - 订单数量趋势
-   - 各门店营收排行
-
-2. `get-cost-analysis` - 成本分析
-   - 物料消耗成本 (sku_materials.cost × 消耗量)
-   - 毛利率计算
-
----
-
-## 三、数据库扩展汇总
-
-**新增表 (共 4 张)**:
-| 表名 | 用途 | 关联 |
-|------|------|------|
-| user_points | 用户积分余额 | profiles |
-| point_transactions | 积分流水记录 | user_points, orders |
-| coupons | 优惠券模板 | - |
-| user_coupons | 用户券包 | profiles, coupons, orders |
-
-**扩展现有表**:
-| 表名 | 新增字段 | 用途 |
-|------|----------|------|
-| profiles | gender, region, birth_date | 用户画像 |
-| orders | coupon_id, points_earned, points_used | 积分/优惠券关联 |
-
----
-
-## 四、Edge Functions 清单
-
-| 函数名 | 阶段 | 功能 | 认证要求 |
-|--------|------|------|----------|
-| create-order (升级) | 1 | 下单+BOM扣减 | 可选 |
-| get-user-stats | 2 | 用户统计 | Admin |
-| get-user-segments | 2 | 用户分层 | Admin |
-| get-user-insights | 2 | 用户画像 | Admin |
-| auth-register | 3 | 用户注册 | 公开 |
-| auth-merchant-login | 3 | 商家登录 | 公开 |
-| get-current-user | 3 | 获取当前用户 | 认证 |
-| batch-send-coupons | 4 | 批量发券 | Admin |
-| redeem-coupon | 4 | 核销优惠券 | 认证 |
-| get-finance-summary | 5 | 财务概览 | Admin |
-| get-cost-analysis | 5 | 成本分析 | Admin |
-
----
-
-## 五、建议执行顺序
+### 2.2 资金流全景图 (Sankey/瀑布图)
 
 ```text
-第1周: 阶段1 - 订单履约闭环
-       ↓ 核心业务流转，C端可真实下单
-第2周: 阶段2 - 用户运营后端
-       ↓ 用户统计页面接入真实数据
-第3周: 阶段3 - 认证与权限
-       ↓ 三端可登录，数据归属用户
-第4周: 阶段4 - 优惠券系统
-       ↓ 营销闭环，提升复购
-第5周: 阶段5 - 财务报表
-       ↓ 经营数据可视化
+进项 (收入)                              出项 (支出)
+┌──────────────┐                    ┌──────────────┐
+│ 订单营收     │───────┐    ┌───────│ 物料采购成本 │
+│ ¥ 128,560    │       │    │       │ ¥ 38,200     │
+└──────────────┘       │    │       └──────────────┘
+┌──────────────┐       ▼    ▼       ┌──────────────┐
+│ 会员充值     │───▸ 资金池 ───▸    │ 门店结算     │
+│ ¥ 12,800     │    ¥ 92,160       │ ¥ 64,000     │
+└──────────────┘                    └──────────────┘
+┌──────────────┐                    ┌──────────────┐
+│ 其他收入     │                    │ 优惠券成本   │
+│ ¥ 2,000      │                    │ ¥ 8,200      │
+└──────────────┘                    └──────────────┘
+```
+
+### 2.3 财务报表组件
+
+**收入明细表**
+- 按日期/门店/品类筛选
+- 订单笔数、金额、退款
+- 环比/同比增长率
+
+**成本明细表**
+- 物料消耗成本（基于 BOM 反算）
+- 补货采购成本（基于 restock_batches）
+- 优惠券核销成本
+
+**应收应付表**
+- 应收：会员充值余额、预付款
+- 应付：待结算门店款项、供应商货款
+
+---
+
+## 三、门店结算中心设计
+
+### 3.1 结算规则
+
+```text
+Kakago 平台结算周期：每 7 天
+结算日：每周固定日（可配置）
+
+门店应得金额计算公式：
+┌─────────────────────────────────────────────────────────┐
+│ 应结金额 = 门店订单总额 - 平台服务费 - 优惠券分摊成本   │
+│                                                         │
+│ 其中:                                                   │
+│ - 平台服务费 = 订单总额 x 费率（可配置，如 5%）          │
+│ - 优惠券分摊成本 = 门店核销券面额 x 50%                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 3.2 结算状态流转
+
+```text
+pending (待结算)
+    │
+    ▼ 周期到达 + 审核
+confirmed (已确认)
+    │
+    ▼ 财务打款
+paid (已支付)
+    │
+    ▼ 门店确认
+completed (已完成)
+```
+
+### 3.3 门店结算列表视图
+
+| 列名 | 说明 |
+|------|------|
+| 门店名称 | 关联 stores.name |
+| 结算周期 | 2026-01-27 ~ 2026-02-02 |
+| 订单笔数 | 该周期内完成订单数 |
+| 订单总额 | SUM(total_amount) |
+| 优惠券核销数 | 核销券数量 |
+| 优惠券成本 | 券面额 x 50% |
+| 平台服务费 | 订单总额 x 费率 |
+| 应结金额 | 最终应付门店金额 |
+| 状态 | pending/confirmed/paid |
+| 操作 | 确认/导出/查看明细 |
+
+---
+
+## 四、数据库设计
+
+### 4.1 新增表
+
+**settlements (结算记录表)**
+```sql
+CREATE TABLE public.settlements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES stores(id),
+  
+  -- 结算周期
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  
+  -- 金额明细
+  order_count INTEGER DEFAULT 0,
+  order_total NUMERIC DEFAULT 0,
+  
+  -- 扣减项
+  coupon_count INTEGER DEFAULT 0,
+  coupon_cost NUMERIC DEFAULT 0,          -- 券面额 x 50%
+  platform_fee_rate NUMERIC DEFAULT 0.05, -- 平台费率
+  platform_fee NUMERIC DEFAULT 0,         -- 平台服务费
+  
+  -- 最终金额
+  settlement_amount NUMERIC DEFAULT 0,    -- 应结金额
+  
+  -- 状态
+  status settlement_status DEFAULT 'pending',
+  confirmed_at TIMESTAMPTZ,
+  paid_at TIMESTAMPTZ,
+  
+  -- 备注
+  notes TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TYPE settlement_status AS ENUM ('pending', 'confirmed', 'paid', 'completed');
+```
+
+**financial_transactions (资金流水表)**
+```sql
+CREATE TABLE public.financial_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- 流水类型
+  type financial_tx_type NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('in', 'out')),
+  
+  -- 金额
+  amount NUMERIC NOT NULL,
+  
+  -- 关联
+  store_id UUID REFERENCES stores(id),
+  order_id UUID REFERENCES orders(id),
+  settlement_id UUID REFERENCES settlements(id),
+  
+  -- 描述
+  description TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TYPE financial_tx_type AS ENUM (
+  'order_revenue',      -- 订单收入
+  'refund',             -- 退款
+  'material_purchase',  -- 物料采购
+  'store_settlement',   -- 门店结算支出
+  'coupon_cost',        -- 优惠券成本
+  'other_income',       -- 其他收入
+  'other_expense'       -- 其他支出
+);
+```
+
+**coupons (优惠券模板) - 如尚未创建**
+```sql
+CREATE TABLE public.coupons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  type coupon_type NOT NULL,
+  value NUMERIC NOT NULL,           -- 面额
+  min_order NUMERIC DEFAULT 0,      -- 满减门槛
+  valid_days INTEGER DEFAULT 7,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TYPE coupon_type AS ENUM ('fixed', 'discount', 'freebie');
+```
+
+**user_coupons (用户券包) - 如尚未创建**
+```sql
+CREATE TABLE public.user_coupons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  coupon_id UUID REFERENCES coupons(id),
+  store_id UUID REFERENCES stores(id),    -- 核销门店
+  
+  status coupon_status DEFAULT 'active',
+  
+  received_at TIMESTAMPTZ DEFAULT now(),
+  used_at TIMESTAMPTZ,
+  used_order_id UUID REFERENCES orders(id),
+  expire_at TIMESTAMPTZ,
+  
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TYPE coupon_status AS ENUM ('active', 'used', 'expired');
+```
+
+### 4.2 扩展 orders 表
+
+```sql
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_id UUID REFERENCES coupons(id);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_discount NUMERIC DEFAULT 0;
 ```
 
 ---
 
-## 六、技术细节
+## 五、Edge Functions 设计
 
-### RLS 策略设计
-- user_points: 用户只能查看自己的积分
-- user_coupons: 用户只能查看/使用自己的券
-- coupons: Admin 可管理，用户只读
+### 5.1 get-finance-summary
 
-### 实时订阅
-- user_points: 启用，积分变动实时显示
-- user_coupons: 启用，新券实时推送
+**功能**: 获取财务概览数据
 
-### 性能考虑
-- 用户分层统计使用数据库函数 (RPC) 而非前端计算
-- 财务报表支持缓存，避免频繁聚合查询
+**返回数据**:
+```json
+{
+  "today": {
+    "revenue": 12560,
+    "orderCount": 89,
+    "materialCost": 3800,
+    "couponCost": 1200,
+    "grossProfit": 7560,
+    "grossMargin": 0.602
+  },
+  "thisWeek": { ... },
+  "thisMonth": { ... },
+  "pendingSettlement": 64000,
+  "trends": [
+    { "date": "2026-01-27", "revenue": 11200, "cost": 3400 },
+    ...
+  ]
+}
+```
+
+### 5.2 get-store-settlements
+
+**功能**: 获取门店结算列表
+
+**参数**:
+- period_start: 周期开始日期
+- period_end: 周期结束日期
+- store_id: 可选，指定门店
+- status: 可选，筛选状态
+
+**返回数据**:
+```json
+{
+  "settlements": [
+    {
+      "store_id": "uuid",
+      "store_name": "望京店",
+      "period": "2026-01-27 ~ 2026-02-02",
+      "order_count": 156,
+      "order_total": 8920,
+      "coupon_count": 12,
+      "coupon_cost": 180,
+      "platform_fee": 446,
+      "settlement_amount": 8294,
+      "status": "pending"
+    }
+  ],
+  "summary": {
+    "total_stores": 205,
+    "total_amount": 1680000,
+    "total_coupon_cost": 42000,
+    "total_platform_fee": 84000
+  }
+}
+```
+
+### 5.3 generate-weekly-settlements
+
+**功能**: 生成周期结算单（定时任务触发或手动执行）
+
+**逻辑**:
+1. 查询上一周期所有门店的已完成订单
+2. 计算各门店核销的优惠券成本
+3. 计算平台服务费
+4. 生成 settlements 记录
+5. 写入 financial_transactions 流水
+
+### 5.4 confirm-settlement
+
+**功能**: 确认结算单（管理员操作）
+
+### 5.5 get-cashflow-report
+
+**功能**: 获取资金流报表
+
+**返回**: 按类型汇总的进出项数据，支持 Sankey 图渲染
+
+---
+
+## 六、前端页面结构
+
+```text
+src/pages/Finance.tsx
+├── 顶部 Tab 切换: 财务看板 | 门店结算
+│
+├── [财务看板 Tab]
+│   ├── components/finance/FinanceKPICards.tsx      -- KPI 指标卡片
+│   ├── components/finance/CashflowChart.tsx        -- 资金流图表
+│   ├── components/finance/RevenueTrendChart.tsx    -- 营收趋势
+│   ├── components/finance/CostBreakdown.tsx        -- 成本构成
+│   └── components/finance/ReceivablePayable.tsx    -- 应收应付
+│
+└── [门店结算 Tab]
+    ├── components/finance/SettlementFilters.tsx    -- 筛选器(周期/门店)
+    ├── components/finance/SettlementTable.tsx      -- 结算列表
+    ├── components/finance/SettlementSummary.tsx    -- 汇总统计
+    └── components/finance/SettlementDetail.tsx     -- 结算详情抽屉
+```
+
+---
+
+## 七、UI 设计参考
+
+### 财务看板布局
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  [财务看板]  [门店结算]                                       │
+├─────────────────────────────────────────────────────────────┤
+│ ┌─────────┬─────────┬─────────┬─────────┬─────────┬───────┐ │
+│ │总营收   │今日营收 │物料成本 │毛利率   │待结算   │券成本 │ │
+│ │¥1.28M  │¥12,560 │¥38.2K  │68.2%   │¥64K    │¥8.2K │ │
+│ └─────────┴─────────┴─────────┴─────────┴─────────┴───────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ ┌────────────────────────────┬──────────────────────────┐   │
+│ │      资金流瀑布图          │      营收趋势图          │   │
+│ │                            │                          │   │
+│ │  收入 ████████████         │    ╭──╮                  │   │
+│ │  成本 ████████             │   ╭╯  ╰──╮               │   │
+│ │  结算 ██████               │  ╭╯      ╰──╮            │   │
+│ │  净利 ████                 │ ╭╯          ╰╮           │   │
+│ │                            │                          │   │
+│ └────────────────────────────┴──────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│ ┌────────────────────────────┬──────────────────────────┐   │
+│ │      成本构成饼图          │      应收/应付明细       │   │
+│ │                            │                          │   │
+│ │     ╭───────╮              │  应收  ¥ 12,800         │   │
+│ │    ╱ 物料60%╲             │  应付  ¥ 72,200         │   │
+│ │   │ 优惠券15%│             │  净额  -¥ 59,400        │   │
+│ │    ╲ 其他25%╱             │                          │   │
+│ │     ╰───────╯              │                          │   │
+│ └────────────────────────────┴──────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 门店结算布局
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  [财务看板]  [门店结算]                                       │
+├─────────────────────────────────────────────────────────────┤
+│ 结算周期: [2026-01-27] ~ [2026-02-02]  状态:[全部▼] [生成结算]│
+├─────────────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 汇总: 205家门店 | 订单¥1,680,000 | 券成本¥42,000        │ │
+│ │       平台费¥84,000 | 应结¥1,554,000                    │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ 门店名称   订单数  订单总额  券核销  券成本  应结金额 状态│   │
+│ ├───────────────────────────────────────────────────────┤   │
+│ │ 望京店      156    ¥8,920    12     ¥180   ¥8,294   待结│   │
+│ │ 朝阳店      203    ¥11,560   18     ¥270   ¥10,767  待结│   │
+│ │ 海淀店      189    ¥10,200   15     ¥225   ¥9,480   已结│   │
+│ │ ...                                                   │   │
+│ └───────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 八、实施步骤
+
+### 第一步: 数据库建设
+1. 创建 settlements 表
+2. 创建 financial_transactions 表
+3. 创建 coupons 和 user_coupons 表（如未创建）
+4. 扩展 orders 表添加优惠券字段
+5. 配置 RLS 策略
+
+### 第二步: Edge Functions 开发
+1. get-finance-summary - 财务概览
+2. get-store-settlements - 结算列表
+3. generate-weekly-settlements - 生成结算单
+4. confirm-settlement - 确认结算
+
+### 第三步: 前端组件开发
+1. 创建 components/finance/ 目录
+2. 实现 KPI 卡片组件
+3. 实现资金流图表（使用 recharts）
+4. 实现门店结算表格
+5. 实现结算详情抽屉
+
+### 第四步: 页面整合
+1. 重构 Finance.tsx 添加 Tab 切换
+2. 整合所有财务组件
+3. 接入真实数据
+
+---
+
+## 九、技术要点
+
+### 结算金额计算公式
+```typescript
+const calculateSettlement = (
+  orderTotal: number,
+  couponFaceValue: number,
+  platformFeeRate: number = 0.05
+) => {
+  const couponCost = couponFaceValue * 0.5;  // 券面额 50%
+  const platformFee = orderTotal * platformFeeRate;
+  const settlementAmount = orderTotal - couponCost - platformFee;
+  return { couponCost, platformFee, settlementAmount };
+};
+```
+
+### 周期自动结算
+- 使用数据库定时任务（pg_cron）每周固定时间触发
+- 或提供手动"生成本周结算"按钮
+
+### RLS 策略
+- settlements 表：Admin 可读写，门店仅可读取自己的记录
+- financial_transactions：仅 Admin 可访问
+
