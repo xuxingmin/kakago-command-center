@@ -1,7 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Settlement } from "@/components/finance/SettlementTable";
 
+// Settlement type definition
+export interface Settlement {
+  id: string;
+  store_id: string;
+  store_name: string;
+  period_start: string;
+  period_end: string;
+  order_count: number;
+  order_total: number;
+  coupon_count: number;
+  coupon_cost: number;
+  platform_fee: number;
+  settlement_amount: number;
+  status: "pending" | "confirmed" | "paid" | "completed";
+}
 // Finance summary data
 interface FinanceSummary {
   totalRevenue: number;
