@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { cn } from "@/lib/utils";
 
 type TimeRange = "day" | "week" | "month";
@@ -18,7 +17,7 @@ function generateTrendData(range: TimeRange) {
     let dateStr: string;
     if (range === "day") {
       date.setDate(date.getDate() - i);
-      dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+      dateStr = `${date.getMonth() + 1}.${date.getDate()}`;
     } else if (range === "week") {
       date.setDate(date.getDate() - i * 7);
       dateStr = `W${Math.ceil(date.getDate() / 7)}`;
@@ -27,24 +26,33 @@ function generateTrendData(range: TimeRange) {
       dateStr = `${date.getMonth() + 1}月`;
     }
     
-    const baseRevenue = range === "day" ? 12000 : range === "week" ? 85000 : 350000;
-    const variance = range === "day" ? 5000 : range === "week" ? 20000 : 80000;
+    const baseRevenue = range === "day" ? 55000 : range === "week" ? 350000 : 1400000;
+    const variance = range === "day" ? 12000 : range === "week" ? 80000 : 300000;
     
     const revenue = Math.floor(baseRevenue + Math.random() * variance);
-    const storeShare = Math.floor(revenue * (0.35 + Math.random() * 0.1));
-    const materialCost = Math.floor(revenue * (0.25 + Math.random() * 0.08));
-    const shippingCost = Math.floor(revenue * 0.03);
-    const apiCost = Math.floor(revenue * 0.01);
-    const couponCost = Math.floor(revenue * (0.02 + Math.random() * 0.02));
+    
+    // 各项成本占比
+    const freightRate = 0.02 + Math.random() * 0.015;
+    const materialRate = 0.14 + Math.random() * 0.06;
+    const couponRate = 0.015 + Math.random() * 0.02;
+    const storeShareRate = 0.45 + Math.random() * 0.1;
+    
+    const freight = Math.floor(revenue * freightRate);
+    const material = Math.floor(revenue * materialRate);
+    const coupon = Math.floor(revenue * couponRate);
+    const storeShare = Math.floor(revenue * storeShareRate);
     
     data.push({
       date: dateStr,
-      实收: revenue,
+      营业额: revenue,
+      运费: freight,
+      运费占比: (freightRate * 100).toFixed(1),
+      物料成本: material,
+      物料成本占比: (materialRate * 100).toFixed(0),
+      投券: coupon,
+      投券占比: (couponRate * 100).toFixed(1),
       门店分成: storeShare,
-      物料成本: materialCost,
-      运费: shippingCost,
-      API调用: apiCost,
-      投券成本: couponCost,
+      门店分成占比: (storeShareRate * 100).toFixed(0),
     });
   }
   
@@ -52,12 +60,52 @@ function generateTrendData(range: TimeRange) {
 }
 
 const COLORS = {
-  实收: "hsl(142, 76%, 45%)",
-  门店分成: "hsl(45, 93%, 47%)",
-  物料成本: "hsl(0, 72%, 51%)",
-  运费: "hsl(200, 80%, 55%)",
-  API调用: "hsl(280, 70%, 60%)",
-  投券成本: "hsl(320, 70%, 55%)",
+  运费: "#c4d84a",
+  物料成本: "#6ab04c",
+  投券: "#eb4d4b",
+  门店分成: "#16a085",
+};
+
+const STACK_KEYS = ["运费", "物料成本", "投券", "门店分成"] as const;
+
+// 自定义柱状图标签
+const renderBarLabel = (props: any, dataKey: string, data: any[]) => {
+  const { x, y, width, height, index } = props;
+  if (height < 20) return null;
+  
+  const item = data[index];
+  const percentKey = `${dataKey}占比`;
+  const percent = item[percentKey];
+  
+  return (
+    <text
+      x={x + width / 2}
+      y={y + height / 2}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fontSize={10}
+      fontWeight={500}
+    >
+      {percent}%
+    </text>
+  );
+};
+
+// 自定义营业额标签
+const renderRevenueLabel = (props: any) => {
+  const { x, y, value } = props;
+  return (
+    <text
+      x={x}
+      y={y - 8}
+      fill="#9CA3AF"
+      textAnchor="middle"
+      fontSize={10}
+    >
+      {value?.toLocaleString()}
+    </text>
+  );
 };
 
 export function OperationTrendChart() {
@@ -66,7 +114,7 @@ export function OperationTrendChart() {
 
   const formatValue = (value: number) => {
     if (value >= 10000) {
-      return `${(value / 10000).toFixed(1)}万`;
+      return `${(value / 10000).toFixed(0)}k`;
     }
     return value.toLocaleString();
   };
@@ -76,6 +124,12 @@ export function OperationTrendChart() {
     { value: "week", label: "周" },
     { value: "month", label: "月" },
   ];
+
+  // 计算堆叠总高度用于折线
+  const dataWithTotal = data.map(item => ({
+    ...item,
+    total: item.运费 + item.物料成本 + item.投券 + item.门店分成,
+  }));
 
   return (
     <div className="bg-card border border-secondary rounded-lg p-3 h-full flex flex-col">
@@ -106,15 +160,7 @@ export function OperationTrendChart() {
       {/* 图表 */}
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <defs>
-              {Object.entries(COLORS).map(([key, color]) => (
-                <linearGradient key={key} id={`gradient-${key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                </linearGradient>
-              ))}
-            </defs>
+          <ComposedChart data={dataWithTotal} margin={{ top: 25, right: 10, left: -10, bottom: 5 }}>
             <XAxis 
               dataKey="date" 
               tick={{ fill: "#9CA3AF", fontSize: 10 }}
@@ -123,7 +169,7 @@ export function OperationTrendChart() {
             />
             <YAxis 
               tick={{ fill: "#9CA3AF", fontSize: 10 }}
-              axisLine={false}
+              axisLine={{ stroke: "#333" }}
               tickLine={false}
               tickFormatter={formatValue}
             />
@@ -135,62 +181,67 @@ export function OperationTrendChart() {
                 fontSize: "11px",
               }}
               labelStyle={{ color: "#9CA3AF" }}
-              formatter={(value: number, name: string) => [
-                `¥${formatValue(value)}`,
-                name
-              ]}
+              formatter={(value: number, name: string) => {
+                const item = dataWithTotal.find(d => 
+                  d.运费 === value || d.物料成本 === value || 
+                  d.投券 === value || d.门店分成 === value ||
+                  d.营业额 === value
+                );
+                if (name === "营业额") {
+                  return [`¥${value.toLocaleString()}`, name];
+                }
+                const percentKey = `${name}占比`;
+                const percent = item?.[percentKey as keyof typeof item] || '';
+                return [`¥${value.toLocaleString()} (${percent}%)`, name];
+              }}
             />
-            <Area
+            
+            {/* 堆叠柱状图 */}
+            {STACK_KEYS.map((key) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                stackId="stack"
+                fill={COLORS[key]}
+                barSize={40}
+              >
+                {dataWithTotal.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[key]} />
+                ))}
+                <LabelList
+                  dataKey={key}
+                  content={(props) => renderBarLabel(props, key, dataWithTotal)}
+                />
+              </Bar>
+            ))}
+            
+            {/* 营业额折线 */}
+            <Line
               type="monotone"
-              dataKey="实收"
-              stroke={COLORS.实收}
+              dataKey="营业额"
+              stroke="#2563eb"
               strokeWidth={2}
-              fill={`url(#gradient-实收)`}
-            />
-            <Area
-              type="monotone"
-              dataKey="门店分成"
-              stroke={COLORS.门店分成}
-              strokeWidth={1.5}
-              fill={`url(#gradient-门店分成)`}
-            />
-            <Area
-              type="monotone"
-              dataKey="物料成本"
-              stroke={COLORS.物料成本}
-              strokeWidth={1.5}
-              fill={`url(#gradient-物料成本)`}
-            />
-            <Area
-              type="monotone"
-              dataKey="运费"
-              stroke={COLORS.运费}
-              strokeWidth={1}
-              fill={`url(#gradient-运费)`}
-            />
-            <Area
-              type="monotone"
-              dataKey="API调用"
-              stroke={COLORS.API调用}
-              strokeWidth={1}
-              fill={`url(#gradient-API调用)`}
-            />
-            <Area
-              type="monotone"
-              dataKey="投券成本"
-              stroke={COLORS.投券成本}
-              strokeWidth={1}
-              fill={`url(#gradient-投券成本)`}
-            />
-          </AreaChart>
+              dot={{ fill: "#2563eb", strokeWidth: 0, r: 3 }}
+              activeDot={{ r: 5, fill: "#2563eb" }}
+            >
+              <LabelList
+                dataKey="营业额"
+                content={renderRevenueLabel}
+              />
+            </Line>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
       {/* 图例 */}
-      <div className="flex items-center justify-center gap-4 pt-2 flex-shrink-0 border-t border-[#222] mt-2 flex-wrap">
+      <div className="flex items-center justify-center gap-4 pt-2 flex-shrink-0 border-t border-[#222] mt-2">
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-0.5 bg-[#2563eb]" />
+          <span className="text-xs text-muted-foreground">营业额</span>
+        </div>
         {Object.entries(COLORS).map(([key, color]) => (
           <div key={key} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
             <span className="text-xs text-muted-foreground">{key}</span>
           </div>
         ))}
