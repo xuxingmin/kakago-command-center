@@ -48,7 +48,7 @@ export function getRandomStoreName(stores: StoreData[]): string {
   return stores[Math.floor(Math.random() * stores.length)].name;
 }
 
-// 订单统计 hook (含昨日对比)
+// 订单统计 hook (含昨日同时段对比)
 interface OrderStats {
   todayCount: number;
   todayRevenue: number;
@@ -73,23 +73,28 @@ export function useOrderStats(): OrderStats & { revenueTrend: number; countTrend
 
   useEffect(() => {
     async function fetchStats() {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
 
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      // 昨日同时段: 昨日0点 ~ 昨日此刻
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      const yesterdaySameTime = new Date(now);
+      yesterdaySameTime.setDate(yesterdaySameTime.getDate() - 1);
 
       const [todayRes, yesterdayRes] = await Promise.all([
         supabase
           .from("orders")
           .select("total_amount")
-          .gte("created_at", today.toISOString())
+          .gte("created_at", todayStart.toISOString())
+          .lte("created_at", now.toISOString())
           .neq("status", "cancelled"),
         supabase
           .from("orders")
           .select("total_amount")
-          .gte("created_at", yesterday.toISOString())
-          .lt("created_at", today.toISOString())
+          .gte("created_at", yesterdayStart.toISOString())
+          .lte("created_at", yesterdaySameTime.toISOString())
           .neq("status", "cancelled"),
       ]);
 
