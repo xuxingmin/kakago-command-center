@@ -202,7 +202,6 @@ export function KPIGrid() {
         title="用户增长"
         value={`+${userGrowth}`}
         subValue={`总用户 ${totalUsers.toLocaleString()}`}
-        trend={userGrowthTrend}
         icon={UserPlus}
       />
       <SKUCard />
