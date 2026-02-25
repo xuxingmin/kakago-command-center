@@ -204,6 +204,62 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          coupon_id: string | null
+          created_at: string | null
+          end_at: string | null
+          id: string
+          name: string
+          sent_count: number | null
+          start_at: string | null
+          status: string | null
+          target_count: number | null
+          target_segment: string
+          target_store_ids: string[] | null
+          updated_at: string | null
+          used_count: number | null
+        }
+        Insert: {
+          coupon_id?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          name: string
+          sent_count?: number | null
+          start_at?: string | null
+          status?: string | null
+          target_count?: number | null
+          target_segment?: string
+          target_store_ids?: string[] | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Update: {
+          coupon_id?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          name?: string
+          sent_count?: number | null
+          start_at?: string | null
+          status?: string | null
+          target_count?: number | null
+          target_segment?: string
+          target_store_ids?: string[] | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           coupon_discount: number | null
