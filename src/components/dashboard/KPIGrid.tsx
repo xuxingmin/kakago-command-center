@@ -153,37 +153,33 @@ function RepurchaseCard() {
 
 export function KPIGrid() {
   const { activeCount, totalCount } = useStores();
-  const { todayCount, todayRevenue } = useOrderStats();
+  const { todayCount, todayRevenue, revenueTrend, countTrend } = useOrderStats();
 
   return (
     <div className="grid grid-cols-7 gap-3">
-      {/* 1. 营业商户 - 使用真实数据 */}
       <MerchantCard activeCount={activeCount} totalCount={totalCount} />
-      {/* 2. 今日营收 - 使用真实订单数据 */}
       <KPICard
         title="今日营收"
         value={`¥${todayRevenue.toLocaleString()}`}
-        trend={todayRevenue > 0 ? 12.5 : 0}
+        subValue="较昨日"
+        trend={revenueTrend}
         icon={DollarSign}
       />
-      {/* 3. 今日出杯 - 使用真实订单数据 */}
       <KPICard
         title="今日出杯"
         value={todayCount.toLocaleString()}
-        subValue="杯"
-        trend={todayCount > 0 ? 8.3 : 0}
+        subValue="较昨日"
+        trend={countTrend}
         icon={Coffee}
       />
-      {/* 4. 今日复购 */}
       <RepurchaseCard />
-      {/* 5. 用户增长 */}
       <KPICard
         title="用户增长"
         value="+156"
-        trend={23.4}
+        subValue="较昨日"
+        trend={12.8}
         icon={UserPlus}
       />
-      {/* 6. SKU占比 - 占2列 */}
       <SKUCard />
     </div>
   );

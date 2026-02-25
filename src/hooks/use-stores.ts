@@ -48,17 +48,26 @@ export function getRandomStoreName(stores: StoreData[]): string {
   return stores[Math.floor(Math.random() * stores.length)].name;
 }
 
-// 订单统计 hook
+// 订单统计 hook (含昨日对比)
 interface OrderStats {
   todayCount: number;
   todayRevenue: number;
+  yesterdayCount: number;
+  yesterdayRevenue: number;
   loading: boolean;
 }
 
-export function useOrderStats(): OrderStats {
+function calcTrend(today: number, yesterday: number): number {
+  if (yesterday === 0) return today > 0 ? 100 : 0;
+  return Math.round(((today - yesterday) / yesterday) * 1000) / 10;
+}
+
+export function useOrderStats(): OrderStats & { revenueTrend: number; countTrend: number } {
   const [stats, setStats] = useState<OrderStats>({
     todayCount: 0,
     todayRevenue: 0,
+    yesterdayCount: 0,
+    yesterdayRevenue: 0,
     loading: true,
   });
 
@@ -67,26 +76,37 @@ export function useOrderStats(): OrderStats {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data, error } = await supabase
-        .from("orders")
-        .select("total_amount")
-        .gte("created_at", today.toISOString())
-        .neq("status", "cancelled");
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-      if (!error && data) {
-        setStats({
-          todayCount: data.length,
-          todayRevenue: data.reduce((sum, order) => sum + Number(order.total_amount), 0),
-          loading: false,
-        });
-      } else {
-        setStats(prev => ({ ...prev, loading: false }));
-      }
+      const [todayRes, yesterdayRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("total_amount")
+          .gte("created_at", today.toISOString())
+          .neq("status", "cancelled"),
+        supabase
+          .from("orders")
+          .select("total_amount")
+          .gte("created_at", yesterday.toISOString())
+          .lt("created_at", today.toISOString())
+          .neq("status", "cancelled"),
+      ]);
+
+      const todayData = todayRes.data || [];
+      const yesterdayData = yesterdayRes.data || [];
+
+      setStats({
+        todayCount: todayData.length,
+        todayRevenue: todayData.reduce((sum, o) => sum + Number(o.total_amount), 0),
+        yesterdayCount: yesterdayData.length,
+        yesterdayRevenue: yesterdayData.reduce((sum, o) => sum + Number(o.total_amount), 0),
+        loading: false,
+      });
     }
 
     fetchStats();
 
-    // 订阅实时更新
     const channel = supabase
       .channel("orders-stats")
       .on(
@@ -101,5 +121,9 @@ export function useOrderStats(): OrderStats {
     };
   }, []);
 
-  return stats;
+  return {
+    ...stats,
+    revenueTrend: calcTrend(stats.todayRevenue, stats.yesterdayRevenue),
+    countTrend: calcTrend(stats.todayCount, stats.yesterdayCount),
+  };
 }
