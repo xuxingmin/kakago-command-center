@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Send, Megaphone, Users as UsersIcon, UserPlus, Moon, UserX, TrendingUp, TrendingDown, Award, DollarSign } from "lucide-react";
+import { ReviewStatsPanel, NegativeReviewList } from "@/components/users/ReviewStats";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 import { CouponDialog } from "@/components/users/CouponDialog";
@@ -240,6 +241,11 @@ export default function Users() {
       <KPIRow />
       <ActionZone />
       <InsightsRow />
+      {/* 第四层: 用户评价 */}
+      <div className="grid grid-cols-2 gap-6 h-64">
+        <ReviewStatsPanel />
+        <NegativeReviewList />
+      </div>
     </div>
   );
 }
