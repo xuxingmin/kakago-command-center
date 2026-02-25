@@ -20,18 +20,12 @@ export function ExceptionMonitor() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [newAlertFlash, setNewAlertFlash] = useState(false);
 
-  // 获取订单预警（待接单超过3分钟）
   const fetchOrderAlerts = async () => {
     const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
     
     const { data: pendingOrders } = await supabase
       .from("orders")
-      .select(`
-        id,
-        order_no,
-        created_at,
-        stores!inner(name)
-      `)
+      .select(`id, order_no, created_at, stores!inner(name)`)
       .eq("status", "pending")
       .lt("created_at", threeMinutesAgo)
       .order("created_at", { ascending: true })
@@ -43,25 +37,15 @@ export function ExceptionMonitor() {
         id: `order-${order.id}`,
         type: "order" as AlertType,
         title: "订单超时未接",
-        detail: `${order.stores?.name || "未知门店"} · 订单 ${order.order_no} 已等待 ${waitMinutes}分钟`,
-        time: new Date(order.created_at).toLocaleTimeString("zh-CN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
+        detail: `${order.stores?.name || "未知门店"} · ${order.order_no} 等待 ${waitMinutes}分钟`,
+        time: new Date(order.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         severity: waitMinutes > 5 ? "high" : "medium",
       };
     });
 
-    // 获取库存预警
     const { data: lowInventory } = await supabase
       .from("store_inventory")
-      .select(`
-        id,
-        current_quantity,
-        stores!inner(name),
-        sku_materials!inner(name)
-      `)
+      .select(`id, current_quantity, stores!inner(name), sku_materials!inner(name)`)
       .lt("current_quantity", 20)
       .limit(5);
 
@@ -70,167 +54,79 @@ export function ExceptionMonitor() {
       type: "supply" as AlertType,
       title: "原料库存预警",
       detail: `${inv.stores?.name || "未知门店"} · ${inv.sku_materials?.name || "物料"} 仅剩 ${inv.current_quantity}`,
-      time: new Date().toLocaleTimeString("zh-CN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
+      time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
       severity: inv.current_quantity < 10 ? "high" : "medium",
     }));
 
-    const allAlerts = [...orderAlerts, ...supplyAlerts].sort((a, b) => 
-      a.severity === "high" && b.severity !== "high" ? -1 : 1
-    );
-
-    setAlerts(allAlerts);
+    setAlerts([...orderAlerts, ...supplyAlerts].sort((a, b) => a.severity === "high" && b.severity !== "high" ? -1 : 1));
   };
 
-  // 初始化加载
   useEffect(() => {
     fetchOrderAlerts();
-    
-    // 定时刷新预警
     const interval = setInterval(fetchOrderAlerts, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Realtime订阅订单变化
   useEffect(() => {
     const channel = supabase
       .channel("alerts-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => {
-          fetchOrderAlerts();
-          setNewAlertFlash(true);
-          setTimeout(() => setNewAlertFlash(false), 1000);
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        fetchOrderAlerts();
+        setNewAlertFlash(true);
+        setTimeout(() => setNewAlertFlash(false), 1000);
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const highSeverityCount = alerts.filter(a => a.severity === "high").length;
+  const highCount = alerts.filter(a => a.severity === "high").length;
 
   return (
-    <div className="bg-card border border-secondary rounded-lg p-3 h-full flex flex-col">
-      {/* 标题栏 */}
+    <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-3 h-full flex flex-col">
+      {/* 标题 + 统计 */}
       <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <AlertTriangle className={cn(
-            "w-4 h-4",
-            highSeverityCount > 0 ? "text-destructive animate-pulse" : "text-warning"
-          )} />
-          <span className="text-sm font-medium">事件预警</span>
-          {highSeverityCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/20 text-destructive numeric">
-              {highSeverityCount} 紧急
-            </span>
+          <AlertTriangle className={cn("w-3.5 h-3.5", highCount > 0 ? "text-red-500 animate-pulse" : "text-amber-500")} />
+          <span className="text-xs font-medium text-[#E5E5E5]">事件预警</span>
+          {highCount > 0 && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 numeric">{highCount} 紧急</span>
           )}
         </div>
-        
-        {/* 音效开关 */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0"
-          onClick={() => setSoundEnabled(!soundEnabled)}
-        >
-          {soundEnabled ? (
-            <Volume2 className="w-3.5 h-3.5 text-primary" />
-          ) : (
-            <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
-          )}
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-[10px] text-[#6B7280]">
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />订单: {alerts.filter(a => a.type === "order").length}</span>
+            <span className="flex items-center gap-1"><Package className="w-3 h-3" />供应链: {alerts.filter(a => a.type === "supply").length}</span>
+          </div>
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setSoundEnabled(!soundEnabled)}>
+            {soundEnabled ? <Volume2 className="w-3 h-3 text-primary" /> : <VolumeX className="w-3 h-3 text-[#555]" />}
+          </Button>
+        </div>
       </div>
 
-      {/* 预警列表 */}
-      <div className={cn(
-        "flex-1 overflow-y-auto space-y-1.5 scrollbar-thin",
-        newAlertFlash && "ring-1 ring-destructive/50 rounded"
-      )}>
+      {/* 预警列表 - 横向排列 */}
+      <div className={cn("flex-1 overflow-y-auto flex flex-wrap gap-2 content-start", newAlertFlash && "ring-1 ring-red-500/30 rounded")}>
         {alerts.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            <CheckCircle className="w-4 h-4 mr-2 text-success" />
+          <div className="flex items-center justify-center w-full h-full text-[#555] text-xs">
+            <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500/60" />
             暂无预警事件
           </div>
         ) : (
-          alerts.map((alert, index) => (
+          alerts.map((alert) => (
             <div
               key={alert.id}
               className={cn(
-                "relative px-2.5 py-2 rounded text-xs transition-all duration-300 overflow-hidden",
-                alert.severity === "high" 
-                  ? "bg-gradient-to-r from-destructive/20 to-destructive/5 border border-destructive/30" 
-                  : "bg-gradient-to-r from-warning/10 to-transparent border border-warning/20",
-                index === 0 && "animate-fade-in"
+                "px-2.5 py-1.5 rounded text-[11px] flex items-center gap-2 flex-shrink-0",
+                alert.severity === "high"
+                  ? "bg-red-500/8 border border-red-500/20 text-red-400"
+                  : "bg-amber-500/8 border border-amber-500/15 text-amber-400"
               )}
             >
-              {/* 高危呼吸光效 */}
-              {alert.severity === "high" && (
-                <div className="absolute inset-0 bg-destructive/10 animate-pulse pointer-events-none" />
-              )}
-              
-              <div className="relative flex items-start gap-2">
-                {/* 图标 */}
-                <div className={cn(
-                  "mt-0.5 flex-shrink-0",
-                  alert.severity === "high" ? "text-destructive" : "text-warning"
-                )}>
-                  {alert.type === "order" ? (
-                    <Clock className="w-3.5 h-3.5" />
-                  ) : (
-                    <Package className="w-3.5 h-3.5" />
-                  )}
-                </div>
-                
-                {/* 内容 */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={cn(
-                      "font-medium",
-                      alert.severity === "high" ? "text-destructive" : "text-warning"
-                    )}>
-                      {alert.title}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground numeric flex-shrink-0">
-                      {alert.time}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground mt-0.5 truncate">
-                    {alert.detail}
-                  </p>
-                </div>
-              </div>
+              {alert.type === "order" ? <Clock className="w-3 h-3 flex-shrink-0" /> : <Package className="w-3 h-3 flex-shrink-0" />}
+              <span className="text-[#9CA3AF]">{alert.detail}</span>
+              <span className="text-[9px] numeric text-[#555]">{alert.time}</span>
             </div>
           ))
         )}
-      </div>
-
-      {/* 底部统计 */}
-      <div className="flex-shrink-0 pt-2 border-t border-border mt-2">
-        <div className="flex justify-between text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              订单异常: {alerts.filter(a => a.type === "order").length}
-            </span>
-            <span className="flex items-center gap-1">
-              <Package className="w-3 h-3" />
-              供应链: {alerts.filter(a => a.type === "supply").length}
-            </span>
-          </div>
-          <span className={cn(
-            "px-1.5 py-0.5 rounded",
-            soundEnabled ? "bg-primary/20 text-primary" : "bg-muted"
-          )}>
-            {soundEnabled ? "音效开启" : "静音中"}
-          </span>
-        </div>
       </div>
     </div>
   );
