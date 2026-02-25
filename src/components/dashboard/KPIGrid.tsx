@@ -14,12 +14,17 @@ interface KPICardProps {
 
 function KPICard({ title, value, subValue, trend, icon: Icon }: KPICardProps) {
   return (
-    <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-2.5 hover:border-[#333] transition-colors duration-200">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-[#6B7280] truncate">{title}</span>
-        <Icon className="w-3 h-3 text-[#555] flex-shrink-0" />
+    <div
+      className={cn(
+        "bg-[#121212] border border-[#333333] rounded-lg p-2.5 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
+      )}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] text-[#9CA3AF] truncate">{title}</span>
+        <Icon className="w-3 h-3 text-[#9CA3AF] flex-shrink-0" />
       </div>
-      <div className="font-mono text-lg font-extrabold text-[#E5E5E5] tabular-nums leading-tight">
+      <div className="font-mono text-lg font-extrabold text-white tabular-nums leading-tight">
         {value}
       </div>
       {(subValue || trend !== undefined) && (
@@ -27,16 +32,16 @@ function KPICard({ title, value, subValue, trend, icon: Icon }: KPICardProps) {
           {trend !== undefined && (
             <>
               {trend >= 0 ? (
-                <TrendingUp className="w-2.5 h-2.5 text-emerald-500" />
+                <TrendingUp className="w-2.5 h-2.5 text-success" />
               ) : (
-                <TrendingDown className="w-2.5 h-2.5 text-red-500" />
+                <TrendingDown className="w-2.5 h-2.5 text-destructive" />
               )}
-              <span className={cn("text-[10px] font-mono tabular-nums", trend >= 0 ? "text-emerald-500" : "text-red-500")}>
+              <span className={cn("text-[10px] font-mono tabular-nums", trend >= 0 ? "text-success" : "text-destructive")}>
                 {trend >= 0 ? "+" : ""}{trend}%
               </span>
             </>
           )}
-          {subValue && <span className="text-[10px] text-[#555] truncate">{subValue}</span>}
+          {subValue && <span className="text-[10px] text-[#9CA3AF] truncate">{subValue}</span>}
         </div>
       )}
     </div>
@@ -48,38 +53,48 @@ function MerchantCard({ activeCount, totalCount }: { activeCount: number; totalC
   const [displayTotal, setDisplayTotal] = useState(0);
 
   useEffect(() => {
+    const duration = 1000;
     const steps = 20;
-    const stepTime = 50;
-    let step = 0;
+    const stepTime = duration / steps;
+    
+    let currentStep = 0;
     const timer = setInterval(() => {
-      step++;
-      setDisplayActive(Math.round((activeCount * step) / steps));
-      setDisplayTotal(Math.round((totalCount * step) / steps));
-      if (step >= steps) clearInterval(timer);
+      currentStep++;
+      setDisplayActive(Math.round((activeCount * currentStep) / steps));
+      setDisplayTotal(Math.round((totalCount * currentStep) / steps));
+      
+      if (currentStep >= steps) clearInterval(timer);
     }, stepTime);
+
     return () => clearInterval(timer);
   }, [activeCount, totalCount]);
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-2.5 hover:border-[#333] transition-colors duration-200">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-[#6B7280]">营业商户</span>
-        <Store className="w-3 h-3 text-[#555]" />
+    <div
+      className={cn(
+        "bg-[#121212] border border-[#333333] rounded-lg p-2.5 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
+      )}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] text-[#9CA3AF]">营业商户</span>
+        <Store className="w-3 h-3 text-[#9CA3AF]" />
       </div>
       <div className="flex items-baseline gap-0.5">
-        <span className="font-mono text-lg font-extrabold text-[#E5E5E5] tabular-nums">{displayActive}</span>
-        <span className="font-mono text-sm text-[#555] tabular-nums">/{displayTotal}</span>
+        <span className="font-mono text-lg font-extrabold text-white tabular-nums">{displayActive}</span>
+        <span className="font-mono text-sm text-[#9CA3AF] tabular-nums">/{displayTotal}</span>
       </div>
-      <span className="text-[10px] text-[#555]">在线/注册</span>
+      <span className="text-[10px] text-[#9CA3AF] mt-0.5">在线/注册</span>
     </div>
   );
 }
 
+// SKU 占比 - 从数据库读取10个产品
 function SKUCard() {
   const [skuData, setSkuData] = useState<{ name: string; value: number; color: string }[]>([]);
 
   const colors = [
-    "bg-orange-500", "bg-cyan-500", "bg-amber-500", "bg-blue-500", "bg-violet-500",
+    "bg-orange-500", "bg-cyan-500", "bg-amber-500", "bg-blue-500", "bg-purple-500",
     "bg-emerald-500", "bg-rose-500", "bg-indigo-500", "bg-teal-500", "bg-pink-500",
   ];
 
@@ -93,6 +108,7 @@ function SKUCard() {
         .limit(10);
 
       if (data && data.length > 0) {
+        // 模拟占比分布
         const baseValues = [14, 13, 12, 11, 10, 9, 8, 8, 8, 7];
         setSkuData(data.map((p, i) => ({
           name: p.name.length > 4 ? p.name.slice(0, 4) : p.name,
@@ -105,20 +121,28 @@ function SKUCard() {
   }, []);
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-2.5 hover:border-[#333] transition-colors duration-200 col-span-3">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] text-[#6B7280]">SKU 占比</span>
-        <Package className="w-3 h-3 text-[#555]" />
+    <div
+      className={cn(
+        "bg-[#121212] border border-[#333333] rounded-lg p-2.5 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default col-span-3"
+      )}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] text-[#9CA3AF]">SKU 占比</span>
+        <Package className="w-3 h-3 text-[#9CA3AF]" />
       </div>
-      <div className="grid grid-cols-5 gap-x-3 gap-y-1">
+      <div className="grid grid-cols-5 gap-x-3 gap-y-1.5">
         {skuData.map((item) => (
           <div key={item.name} className="space-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] text-[#6B7280] truncate">{item.name}</span>
-              <span className="font-mono text-[9px] font-bold text-[#E5E5E5] tabular-nums">{item.value}%</span>
+              <span className="text-[10px] text-[#9CA3AF] truncate">{item.name}</span>
+              <span className="font-mono text-[10px] font-bold text-white tabular-nums">{item.value}%</span>
             </div>
-            <div className="h-1 bg-[#1E1E1E] rounded-full overflow-hidden">
-              <div className={cn("h-full rounded-full", item.color)} style={{ width: `${item.value * 4}%` }} />
+            <div className="h-1 bg-[#333333] rounded-full overflow-hidden">
+              <div 
+                className={cn("h-full rounded-full transition-all duration-500", item.color)}
+                style={{ width: `${item.value * 4}%` }}
+              />
             </div>
           </div>
         ))}
@@ -129,13 +153,20 @@ function SKUCard() {
 
 function RepurchaseCard() {
   return (
-    <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-2.5 hover:border-[#333] transition-colors duration-200">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-[#6B7280]">今日复购</span>
-        <Users className="w-3 h-3 text-[#555]" />
+    <div
+      className={cn(
+        "bg-[#121212] border border-[#333333] rounded-lg p-2.5 transition-all duration-300",
+        "hover:border-primary/50 group cursor-default"
+      )}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] text-[#9CA3AF]">今日复购</span>
+        <Users className="w-3 h-3 text-[#9CA3AF]" />
       </div>
-      <div className="font-mono text-lg font-extrabold text-[#E5E5E5] tabular-nums leading-tight">48.2%</div>
-      <span className="text-[10px] text-[#555]">老用户占比</span>
+      <div className="font-mono text-lg font-extrabold text-white tabular-nums leading-tight">
+        48.2%
+      </div>
+      <span className="text-[10px] text-[#9CA3AF]">老用户占比</span>
     </div>
   );
 }
@@ -144,16 +175,35 @@ export function KPIGrid() {
   const { activeCount, totalCount } = useStores();
   const { todayCount, todayRevenue, revenueTrend, countTrend } = useOrderStats();
 
+  // TODO: 接入真实用户数据
   const totalUsers = 86432;
   const userGrowth = 156;
+  const userGrowthTrend = 12.8;
 
   return (
     <div className="grid grid-cols-8 gap-2">
       <MerchantCard activeCount={activeCount} totalCount={totalCount} />
-      <KPICard title="今日营收" value={`¥${todayRevenue.toLocaleString()}`} subValue="较昨日同时段" trend={revenueTrend} icon={DollarSign} />
-      <KPICard title="今日出杯" value={todayCount.toLocaleString()} subValue="较昨日同时段" trend={countTrend} icon={Coffee} />
+      <KPICard
+        title="今日营收"
+        value={`¥${todayRevenue.toLocaleString()}`}
+        subValue="较昨日同时段"
+        trend={revenueTrend}
+        icon={DollarSign}
+      />
+      <KPICard
+        title="今日出杯"
+        value={todayCount.toLocaleString()}
+        subValue="较昨日同时段"
+        trend={countTrend}
+        icon={Coffee}
+      />
       <RepurchaseCard />
-      <KPICard title="用户增长" value={`+${userGrowth}`} subValue={`总用户 ${totalUsers.toLocaleString()}`} icon={UserPlus} />
+      <KPICard
+        title="用户增长"
+        value={`+${userGrowth}`}
+        subValue={`总用户 ${totalUsers.toLocaleString()}`}
+        icon={UserPlus}
+      />
       <SKUCard />
     </div>
   );

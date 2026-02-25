@@ -31,9 +31,9 @@ export function CommandSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <aside className="fixed left-0 top-0 z-40 h-screen w-14 bg-[#0A0A0A] border-r border-[#1E1E1E] flex flex-col">
+      <aside className="fixed left-0 top-0 z-40 h-screen w-14 bg-sidebar border-r border-sidebar-border flex flex-col">
         {/* Logo */}
-        <div className="h-14 flex items-center justify-center border-b border-[#1E1E1E]">
+        <div className="h-14 flex items-center justify-center border-b border-sidebar-border">
           <span className="text-lg font-bold text-primary">K</span>
         </div>
 
@@ -51,15 +51,15 @@ export function CommandSidebar() {
                     className={cn(
                       "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-primary/15 text-primary"
-                        : "text-[#555] hover:bg-[#141414] hover:text-[#999]"
+                        ? "bg-primary/20 text-primary"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Icon className="w-[18px] h-[18px]" />
+                    <Icon className="w-5 h-5" />
                   </NavLink>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#0A0A0A] border-[#1E1E1E] text-[#E5E5E5]">
-                  <span className="text-xs">{item.label}</span>
+                <TooltipContent side="right" className="bg-card border-border">
+                  <span>{item.label}</span>
                 </TooltipContent>
               </Tooltip>
             );
