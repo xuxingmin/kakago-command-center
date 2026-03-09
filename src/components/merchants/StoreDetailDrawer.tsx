@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import {
   Sheet,

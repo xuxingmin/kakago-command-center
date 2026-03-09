@@ -92,10 +92,11 @@ export function SettlementStream() {
             className="h-7 text-xs gap-1"
           >
             <Download className="w-3 h-3" />
-            导出
+            导出结算
           </Button>
+
+          <BulkExportDialog />
         </div>
-      </div>
 
       {/* 汇总统计 */}
       <div className="flex items-center gap-6 mb-3 py-2 px-3 bg-[#121212] rounded border border-[#333] flex-shrink-0">
