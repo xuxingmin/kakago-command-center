@@ -137,6 +137,14 @@ const App = () => (
               </CommandLayout>
             }
           />
+          <Route
+            path="/orders"
+            element={
+              <CommandLayout>
+                <OrderCenter />
+              </CommandLayout>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
