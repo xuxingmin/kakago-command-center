@@ -277,7 +277,17 @@ export function StoreDetailDrawer({
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">实时订单</p>
-                <Button variant="ghost" size="sm" className="text-xs">查看全部</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-primary hover:text-primary"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/orders?store_id=${formData?.id}&store_name=${encodeURIComponent(formData?.name || '')}`);
+                  }}
+                >
+                  查看全部 →
+                </Button>
               </div>
               <div className="border border-border rounded-lg overflow-hidden max-h-[280px] overflow-y-auto">
                 <Table>

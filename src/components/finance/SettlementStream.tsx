@@ -97,6 +97,7 @@ export function SettlementStream() {
 
           <BulkExportDialog />
         </div>
+      </div>
 
       {/* 汇总统计 */}
       <div className="flex items-center gap-6 mb-3 py-2 px-3 bg-[#121212] rounded border border-[#333] flex-shrink-0">
