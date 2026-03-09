@@ -19,6 +19,7 @@ import SupplyAdjust from "./pages/SupplyAdjust";
 
 import Marketing from "./pages/Marketing";
 import Finance from "./pages/Finance";
+import OrderCenter from "./pages/OrderCenter";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 

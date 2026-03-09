@@ -59,7 +59,7 @@ export default function OrderCenter() {
         end.setHours(23, 59, 59, 999);
         query = query.lte("created_at", end.toISOString());
       }
-      if (statusFilter !== "all") query = query.eq("status", statusFilter);
+      if (statusFilter !== "all") query = query.eq("status", statusFilter as "pending" | "making" | "delivering" | "completed" | "cancelled");
 
       const { data, error } = await query;
       if (error) throw error;
