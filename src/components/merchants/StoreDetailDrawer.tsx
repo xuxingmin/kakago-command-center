@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import {
   Sheet,
@@ -63,6 +64,7 @@ export function StoreDetailDrawer({
   onSave,
   onDelete,
 }: StoreDetailDrawerProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<StoreData | null>(null);
 
   // 当 store 变化时更新表单
@@ -275,7 +277,17 @@ export function StoreDetailDrawer({
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">实时订单</p>
-                <Button variant="ghost" size="sm" className="text-xs">查看全部</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-primary hover:text-primary"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/orders?store_id=${formData?.id}&store_name=${encodeURIComponent(formData?.name || '')}`);
+                  }}
+                >
+                  查看全部 →
+                </Button>
               </div>
               <div className="border border-border rounded-lg overflow-hidden max-h-[280px] overflow-y-auto">
                 <Table>

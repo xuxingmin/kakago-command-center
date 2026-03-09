@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useSettlements } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { BulkExportDialog } from "./BulkExportDialog";
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: "待结算", color: "text-orange-400", bg: "bg-orange-400/10" },
@@ -91,8 +92,10 @@ export function SettlementStream() {
             className="h-7 text-xs gap-1"
           >
             <Download className="w-3 h-3" />
-            导出
+            导出结算
           </Button>
+
+          <BulkExportDialog />
         </div>
       </div>
 
