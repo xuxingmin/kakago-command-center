@@ -64,6 +64,7 @@ export function StoreDetailDrawer({
   onSave,
   onDelete,
 }: StoreDetailDrawerProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<StoreData | null>(null);
 
   // 当 store 变化时更新表单
