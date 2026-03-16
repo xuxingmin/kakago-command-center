@@ -23,6 +23,10 @@ type Material = {
   name: string;
   unit_usage: string;
   category: string;
+  main_category: string;
+  sub_category: string;
+  cost: number;
+  conversion_rate: number;
 };
 
 type BomRecipe = {
@@ -30,7 +34,16 @@ type BomRecipe = {
   product_id: string;
   material_id: string;
   usage_quantity: number;
-  material?: Material;
+};
+
+/**
+ * BOM准入规则：只有食材类 + 包材·杯具 可以进入配方
+ * 打包物严禁出现在配方选择列表中
+ */
+const isBomEligible = (m: Material): boolean => {
+  if (m.main_category === "食材") return true;
+  if (m.main_category === "包材" && m.sub_category === "杯具") return true;
+  return false;
 };
 
 export default function SupplyBOM() {
@@ -38,7 +51,6 @@ export default function SupplyBOM() {
   const [newRecipes, setNewRecipes] = useState<{ materialId: string; quantity: number }[]>([]);
   const queryClient = useQueryClient();
 
-  // Fetch active products only
   const { data: products = [] } = useQuery({
     queryKey: ["sku_products_active"],
     queryFn: async () => {
@@ -52,20 +64,22 @@ export default function SupplyBOM() {
     },
   });
 
-  // Fetch all materials for dropdown
-  const { data: materials = [] } = useQuery({
+  // Fetch all materials, then filter for BOM eligibility on the client
+  const { data: allMaterials = [] } = useQuery({
     queryKey: ["sku_materials_all"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sku_materials")
-        .select("id, name, unit_usage, category")
+        .select("id, name, unit_usage, category, main_category, sub_category, cost, conversion_rate")
         .order("name");
       if (error) throw error;
       return data as Material[];
     },
   });
 
-  // Fetch recipes for selected product
+  // Only BOM-eligible materials for the selector
+  const bomMaterials = allMaterials.filter(isBomEligible);
+
   const { data: recipes = [], isLoading: recipesLoading } = useQuery({
     queryKey: ["bom_recipes", selectedProductId],
     queryFn: async () => {
@@ -80,56 +94,42 @@ export default function SupplyBOM() {
     enabled: !!selectedProductId,
   });
 
-  // Auto-select first product
   useEffect(() => {
-    if (products.length > 0 && !selectedProductId) {
-      setSelectedProductId(products[0].id);
-    }
+    if (products.length > 0 && !selectedProductId) setSelectedProductId(products[0].id);
   }, [products, selectedProductId]);
 
-  // Clear new recipes when product changes
-  useEffect(() => {
-    setNewRecipes([]);
-  }, [selectedProductId]);
+  useEffect(() => { setNewRecipes([]); }, [selectedProductId]);
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
+  const getMaterial = (materialId: string) => allMaterials.find((m) => m.id === materialId);
 
-  // Get material info by id
-  const getMaterial = (materialId: string) => materials.find((m) => m.id === materialId);
+  // Calculate single-cup cost = sum of (usage_quantity * cost / conversion_rate)
+  const cupCost = recipes.reduce((sum, r) => {
+    const mat = getMaterial(r.material_id);
+    if (!mat) return sum;
+    return sum + r.usage_quantity * (mat.cost / (mat.conversion_rate || 1));
+  }, 0);
 
-  // Get materials not yet in the recipe
-  const availableMaterials = materials.filter(
+  const availableMaterials = bomMaterials.filter(
     (m) =>
       !recipes.some((r) => r.material_id === m.id) &&
       !newRecipes.some((nr) => nr.materialId === m.id)
   );
 
-  // Add new recipe row
   const handleAddRecipeRow = () => {
-    if (availableMaterials.length === 0) {
-      toast.error("所有原料已添加");
-      return;
-    }
+    if (availableMaterials.length === 0) { toast.error("所有可用原料已添加"); return; }
     setNewRecipes([...newRecipes, { materialId: "", quantity: 0 }]);
   };
 
-  // Update new recipe row
   const updateNewRecipe = (index: number, field: "materialId" | "quantity", value: string | number) => {
     const updated = [...newRecipes];
-    if (field === "materialId") {
-      updated[index].materialId = value as string;
-    } else {
-      updated[index].quantity = value as number;
-    }
+    if (field === "materialId") updated[index].materialId = value as string;
+    else updated[index].quantity = value as number;
     setNewRecipes(updated);
   };
 
-  // Remove new recipe row
-  const removeNewRecipe = (index: number) => {
-    setNewRecipes(newRecipes.filter((_, i) => i !== index));
-  };
+  const removeNewRecipe = (index: number) => setNewRecipes(newRecipes.filter((_, i) => i !== index));
 
-  // Delete existing recipe mutation
   const deleteMutation = useMutation({
     mutationFn: async (recipeId: string) => {
       const { error } = await supabase.from("bom_recipes").delete().eq("id", recipeId);
@@ -140,43 +140,30 @@ export default function SupplyBOM() {
       queryClient.invalidateQueries({ queryKey: ["bom_recipes_status"] });
       toast.success("已删除原料");
     },
-    onError: () => {
-      toast.error("删除失败");
-    },
+    onError: () => toast.error("删除失败"),
   });
 
-  // Update existing recipe mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
-      const { error } = await supabase
-        .from("bom_recipes")
-        .update({ usage_quantity: quantity })
-        .eq("id", id);
+      const { error } = await supabase.from("bom_recipes").update({ usage_quantity: quantity }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bom_recipes", selectedProductId] });
       toast.success("已更新消耗量");
     },
-    onError: () => {
-      toast.error("更新失败");
-    },
+    onError: () => toast.error("更新失败"),
   });
 
-  // Save new recipes mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
       const validRecipes = newRecipes.filter((r) => r.materialId && r.quantity > 0);
-      if (validRecipes.length === 0) {
-        throw new Error("请选择原料并输入消耗量");
-      }
-
+      if (validRecipes.length === 0) throw new Error("请选择原料并输入消耗量");
       const inserts = validRecipes.map((r) => ({
         product_id: selectedProductId!,
         material_id: r.materialId,
         usage_quantity: r.quantity,
       }));
-
       const { error } = await supabase.from("bom_recipes").insert(inserts);
       if (error) throw error;
     },
@@ -186,9 +173,7 @@ export default function SupplyBOM() {
       setNewRecipes([]);
       toast.success("配方已保存");
     },
-    onError: (err: any) => {
-      toast.error(err.message || "保存失败");
-    },
+    onError: (err: any) => toast.error(err.message || "保存失败"),
   });
 
   return (
@@ -205,17 +190,14 @@ export default function SupplyBOM() {
           <ScrollArea className="h-[calc(100vh-220px)]">
             <div className="px-2 pb-2 space-y-1">
               {products.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-3 py-4 text-center">
-                  暂无上架产品
-                </p>
+                <p className="text-sm text-muted-foreground px-3 py-4 text-center">暂无上架产品</p>
               ) : (
                 products.map((product) => (
                   <button
                     key={product.id}
                     onClick={() => setSelectedProductId(product.id)}
                     className={cn(
-                      "w-full text-left px-3 py-2.5 rounded-md transition-all duration-200",
-                      "text-sm font-medium",
+                      "w-full text-left px-3 py-2.5 rounded-md transition-all duration-200 text-sm font-medium",
                       selectedProductId === product.id
                         ? "bg-primary/20 text-primary border border-primary/50"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
@@ -231,21 +213,25 @@ export default function SupplyBOM() {
       </Card>
 
       {/* Right: Recipe Details */}
-      <Card className="flex-1 bg-[#1A1A1A] border-border">
+      <Card className="flex-1 bg-card border-border">
         <CardHeader className="border-b border-border">
-          <CardTitle className="text-xl text-foreground flex items-center gap-3">
-            {selectedProduct ? (
-              <>
-                <Package className="w-5 h-5 text-primary" />
-                {selectedProduct.name}
-                <span className="text-xs text-muted-foreground font-mono">
-                  ¥{selectedProduct.price.toFixed(2)}
-                </span>
-              </>
-            ) : (
-              "请选择产品"
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl text-foreground flex items-center gap-3">
+              {selectedProduct ? (
+                <>
+                  <Package className="w-5 h-5 text-primary" />
+                  {selectedProduct.name}
+                  <span className="text-xs text-muted-foreground font-mono">¥{selectedProduct.price.toFixed(2)}</span>
+                </>
+              ) : "请选择产品"}
+            </CardTitle>
+            {selectedProduct && recipes.length > 0 && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">单杯物料成本</p>
+                <p className="text-lg font-mono font-bold text-primary">¥{cupCost.toFixed(2)}</p>
+              </div>
             )}
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           {!selectedProduct ? (
@@ -254,11 +240,15 @@ export default function SupplyBOM() {
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                原料消耗配方
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  原料消耗配方
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  仅食材 + 杯具类物料可选 · 打包物已自动排除
+                </p>
+              </div>
 
-              {/* Table Header */}
               <div className="grid grid-cols-[1fr_120px_80px_48px] gap-3 px-3 py-2 bg-secondary/30 rounded-md">
                 <span className="text-xs text-muted-foreground font-medium">原料名称</span>
                 <span className="text-xs text-muted-foreground font-medium text-center">消耗量</span>
@@ -266,83 +256,67 @@ export default function SupplyBOM() {
                 <span className="text-xs text-muted-foreground font-medium"></span>
               </div>
 
-              {/* Existing Recipes */}
               <ScrollArea className="h-[calc(100vh-480px)]">
                 <div className="space-y-2">
                   {recipesLoading ? (
                     <p className="text-sm text-muted-foreground text-center py-4">加载中...</p>
                   ) : recipes.length === 0 && newRecipes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      该产品尚未配置配方
-                    </p>
+                    <p className="text-sm text-muted-foreground text-center py-4">该产品尚未配置配方</p>
                   ) : (
                     <>
-                      {/* Existing recipes */}
                       {recipes.map((recipe) => {
                         const material = getMaterial(recipe.material_id);
                         return (
-                          <div
-                            key={recipe.id}
-                            className="grid grid-cols-[1fr_120px_80px_48px] gap-3 items-center px-3 py-2 bg-secondary/10 rounded-md border border-border hover:border-primary/30 transition-colors"
-                          >
-                            <span className="text-sm font-medium text-foreground">
-                              {material?.name || "未知原料"}
-                            </span>
+                          <div key={recipe.id} className="grid grid-cols-[1fr_120px_80px_48px] gap-3 items-center px-3 py-2 bg-secondary/10 rounded-md border border-border hover:border-primary/30 transition-colors">
+                            <div>
+                              <span className="text-sm font-medium text-foreground">{material?.name || "未知原料"}</span>
+                              {material && (
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  {material.main_category}·{material.sub_category}
+                                </span>
+                              )}
+                            </div>
                             <Input
                               type="number"
                               defaultValue={recipe.usage_quantity}
                               onBlur={(e) => {
                                 const val = parseFloat(e.target.value) || 0;
-                                if (val !== recipe.usage_quantity) {
-                                  updateMutation.mutate({ id: recipe.id, quantity: val });
-                                }
+                                if (val !== recipe.usage_quantity) updateMutation.mutate({ id: recipe.id, quantity: val });
                               }}
                               className="h-8 bg-background border-border text-sm font-mono text-center"
                             />
-                            <span className="text-sm text-primary font-mono text-center">
-                              {material?.unit_usage || "-"}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteMutation.mutate(recipe.id)}
-                              disabled={deleteMutation.isPending}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            >
+                            <span className="text-sm text-primary font-mono text-center">{material?.unit_usage || "-"}</span>
+                            <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(recipe.id)} disabled={deleteMutation.isPending} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         );
                       })}
 
-                      {/* New recipe rows */}
                       {newRecipes.map((nr, index) => {
                         const selectedMaterial = getMaterial(nr.materialId);
                         return (
-                          <div
-                            key={`new-${index}`}
-                            className="grid grid-cols-[1fr_120px_80px_48px] gap-3 items-center px-3 py-2 bg-primary/5 rounded-md border border-primary/30"
-                          >
-                            <Select
-                              value={nr.materialId}
-                              onValueChange={(v) => updateNewRecipe(index, "materialId", v)}
-                            >
+                          <div key={`new-${index}`} className="grid grid-cols-[1fr_120px_80px_48px] gap-3 items-center px-3 py-2 bg-primary/5 rounded-md border border-primary/30">
+                            <Select value={nr.materialId} onValueChange={(v) => updateNewRecipe(index, "materialId", v)}>
                               <SelectTrigger className="h-8 bg-background border-border text-sm">
-                                <SelectValue placeholder="选择原料" />
+                                <SelectValue placeholder="选择原料（食材/杯具）" />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableMaterials
                                   .filter((m) => m.id === nr.materialId || !newRecipes.some((r, i) => i !== index && r.materialId === m.id))
                                   .map((m) => (
                                     <SelectItem key={m.id} value={m.id}>
-                                      {m.name}
+                                      <span>{m.name}</span>
+                                      <span className="ml-2 text-xs text-muted-foreground">{m.main_category}·{m.sub_category}</span>
                                     </SelectItem>
                                   ))}
-                                {materials
+                                {/* Keep already-selected visible */}
+                                {bomMaterials
                                   .filter((m) => m.id === nr.materialId && !availableMaterials.some((am) => am.id === m.id))
                                   .map((m) => (
                                     <SelectItem key={m.id} value={m.id}>
-                                      {m.name}
+                                      <span>{m.name}</span>
+                                      <span className="ml-2 text-xs text-muted-foreground">{m.main_category}·{m.sub_category}</span>
                                     </SelectItem>
                                   ))}
                               </SelectContent>
@@ -354,15 +328,8 @@ export default function SupplyBOM() {
                               placeholder="0"
                               className="h-8 bg-background border-border text-sm font-mono text-center"
                             />
-                            <span className="text-sm text-primary font-mono text-center">
-                              {selectedMaterial?.unit_usage || "-"}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeNewRecipe(index)}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            >
+                            <span className="text-sm text-primary font-mono text-center">{selectedMaterial?.unit_usage || "-"}</span>
+                            <Button variant="ghost" size="icon" onClick={() => removeNewRecipe(index)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -373,25 +340,13 @@ export default function SupplyBOM() {
                 </div>
               </ScrollArea>
 
-              {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  onClick={handleAddRecipeRow}
-                  disabled={availableMaterials.length === 0}
-                  className="border-border hover:border-primary hover:bg-primary/10"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  添加原料
+                <Button variant="outline" onClick={handleAddRecipeRow} disabled={availableMaterials.length === 0} className="border-border hover:border-primary hover:bg-primary/10">
+                  <Plus className="w-4 h-4 mr-2" />添加原料
                 </Button>
                 {newRecipes.length > 0 && (
-                  <Button
-                    onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {saveMutation.isPending ? "保存中..." : "保存配方"}
+                  <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="bg-primary hover:bg-primary/90">
+                    <Save className="w-4 h-4 mr-2" />{saveMutation.isPending ? "保存中..." : "保存配方"}
                   </Button>
                 )}
               </div>
