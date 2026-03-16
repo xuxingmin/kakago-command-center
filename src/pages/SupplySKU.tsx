@@ -40,6 +40,14 @@ const CATEGORY_TREE: Record<string, string[]> = {
 
 const MAIN_CATEGORIES = Object.keys(CATEGORY_TREE);
 
+// Sort weight: 食材=1, 包材·杯具=2, 包材·打包物=3, 包材·其他=4
+const getSortWeight = (main: string, sub: string): number => {
+  if (main === "食材") return 1;
+  if (main === "包材" && sub === "杯具") return 2;
+  if (main === "包材" && sub === "打包物") return 3;
+  return 4;
+};
+
 export default function SupplySKU() {
   const [activeTab, setActiveTab] = useState("products");
   const [productSearch, setProductSearch] = useState("");
@@ -58,7 +66,7 @@ export default function SupplySKU() {
   const { data: materials = [] } = useQuery({
     queryKey: ["sku_materials"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("sku_materials").select("*").order("main_category, sub_category, name");
+      const { data, error } = await supabase.from("sku_materials").select("*").order("name");
       if (error) throw error;
       return data as Material[];
     },
@@ -91,19 +99,36 @@ export default function SupplySKU() {
     p.name.toLowerCase().includes(productSearch.toLowerCase())
   );
 
-  const filteredMaterials = materials.filter((m) =>
-    m.name.toLowerCase().includes(materialSearch.toLowerCase())
-  );
+  // Sort materials by weight then name
+  const sortedMaterials = [...materials]
+    .filter((m) => m.name.toLowerCase().includes(materialSearch.toLowerCase()))
+    .sort((a, b) => {
+      const wa = getSortWeight(a.main_category, a.sub_category);
+      const wb = getSortWeight(b.main_category, b.sub_category);
+      if (wa !== wb) return wa - wb;
+      if (a.sub_category !== b.sub_category) return a.sub_category.localeCompare(b.sub_category);
+      return a.name.localeCompare(b.name);
+    });
 
-  // Group materials by main_category → sub_category
-  const groupedMaterials = filteredMaterials.reduce<Record<string, Record<string, Material[]>>>((acc, m) => {
-    const main = m.main_category || "食材";
-    const sub = m.sub_category || "其他";
-    if (!acc[main]) acc[main] = {};
-    if (!acc[main][sub]) acc[main][sub] = [];
-    acc[main][sub].push(m);
-    return acc;
-  }, {});
+  // Group materials by main_category → sub_category (preserving sort order)
+  const groupedMaterials: { main: string; sub: string; items: Material[] }[] = [];
+  for (const m of sortedMaterials) {
+    const last = groupedMaterials[groupedMaterials.length - 1];
+    if (last && last.main === m.main_category && last.sub === m.sub_category) {
+      last.items.push(m);
+    } else {
+      groupedMaterials.push({ main: m.main_category, sub: m.sub_category, items: [m] });
+    }
+  }
+
+  // Pre-compute mainCategory spans
+  const mainSpans: Record<string, number> = {};
+  for (const g of groupedMaterials) {
+    mainSpans[g.main] = (mainSpans[g.main] || 0) + g.items.length;
+  }
+
+  // Track which main categories have been rendered
+  const mainRendered = new Set<string>();
 
   return (
     <div className="h-full space-y-4">
@@ -201,7 +226,7 @@ export default function SupplySKU() {
           </div>
         </TabsContent>
 
-        {/* Tab 2: Materials — grouped by main_category / sub_category */}
+        {/* Tab 2: Materials — weight-sorted, sticky header, vertical scroll */}
         <TabsContent value="materials" className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-sm">
@@ -216,87 +241,82 @@ export default function SupplySKU() {
             <MaterialDialog queryClient={queryClient} />
           </div>
 
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="w-24">一级分类</TableHead>
-                  <TableHead className="w-24">二级分类</TableHead>
-                  <TableHead>物料名称</TableHead>
-                  <TableHead className="text-center">采购规格</TableHead>
-                  <TableHead className="text-center">消耗规格</TableHead>
-                  <TableHead className="text-center">换算率</TableHead>
-                  <TableHead className="text-right">成本</TableHead>
-                  <TableHead className="w-20">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.keys(groupedMaterials).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+          <div className="rounded-lg border border-border bg-card overflow-hidden overflow-x-hidden max-h-[calc(100vh-250px)] overflow-y-auto relative">
+            <table className="w-full caption-bottom text-sm table-fixed">
+              <thead className="sticky top-0 z-10 bg-card border-b border-border">
+                <tr className="border-border">
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">一级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">二级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[18%]">物料名称</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[20%]">换算率</th>
+                  <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[12%]">成本</th>
+                  <th className="h-11 px-3 align-middle font-medium text-muted-foreground w-[10%]">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupedMaterials.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center text-muted-foreground py-8">
                       暂无物料数据
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ) : (
-                  Object.entries(groupedMaterials).map(([mainCat, subGroups]) => {
-                    // Count total rows under this main category for visual grouping
-                    const mainTotal = Object.values(subGroups).reduce((s, arr) => s + arr.length, 0);
-                    let mainRendered = false;
+                  groupedMaterials.map((group) => {
+                    const showMain = !mainRendered.has(group.main);
+                    if (showMain) mainRendered.add(group.main);
 
-                    return Object.entries(subGroups).map(([subCat, items]) => {
-                      let subRendered = false;
-
-                      return items.map((material, idx) => {
-                        const showMain = !mainRendered;
-                        const showSub = !subRendered;
-                        if (showMain) mainRendered = true;
-                        if (showSub) subRendered = true;
-
-                        return (
-                          <TableRow key={material.id} className="border-border">
-                            {/* Main category — rowSpan visual grouping */}
-                            {showMain ? (
-                              <TableCell rowSpan={mainTotal} className="align-top font-semibold text-primary border-r border-border bg-primary/5">
-                                {mainCat}
-                              </TableCell>
-                            ) : null}
-                            {showSub ? (
-                              <TableCell rowSpan={items.length} className="align-top text-muted-foreground border-r border-border">
-                                {subCat}
-                              </TableCell>
-                            ) : null}
-                            <TableCell className="font-medium">{material.name}</TableCell>
-                            <TableCell className="text-center text-muted-foreground">{material.unit_purchase}</TableCell>
-                            <TableCell className="text-center text-muted-foreground">{material.unit_usage}</TableCell>
-                            <TableCell className="text-center">
-                              <span className="font-mono text-primary font-semibold">{material.conversion_rate}</span>
-                              <span className="text-xs text-muted-foreground ml-1">
-                                (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right font-mono">¥{material.cost.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <MaterialDialog queryClient={queryClient} material={material} />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => deleteMaterialMutation.mutate(material.id)}
-                                  disabled={deleteMaterialMutation.isPending}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      });
-                    });
+                    return group.items.map((material, idx) => (
+                      <tr key={material.id} className="border-b border-border transition-colors hover:bg-muted/50">
+                        {/* Main category rowSpan */}
+                        {showMain && idx === 0 && (
+                          <td
+                            rowSpan={mainSpans[group.main]}
+                            className="px-3 py-2 align-top font-semibold text-primary border-r border-border bg-primary/5"
+                          >
+                            {group.main}
+                          </td>
+                        )}
+                        {/* Sub category rowSpan */}
+                        {idx === 0 && (
+                          <td
+                            rowSpan={group.items.length}
+                            className="px-3 py-2 align-top text-muted-foreground border-r border-border"
+                          >
+                            {group.sub}
+                          </td>
+                        )}
+                        <td className="px-3 py-2 font-medium">{material.name}</td>
+                        <td className="px-3 py-2 text-center text-muted-foreground">{material.unit_purchase}</td>
+                        <td className="px-3 py-2 text-center text-muted-foreground">{material.unit_usage}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className="font-mono text-primary font-semibold">{material.conversion_rate}</span>
+                          <span className="text-xs text-muted-foreground ml-1 break-words">
+                            (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">¥{material.cost.toFixed(2)}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex gap-1">
+                            <MaterialDialog queryClient={queryClient} material={material} />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deleteMaterialMutation.mutate(material.id)}
+                              disabled={deleteMaterialMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ));
                   })
                 )}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
         </TabsContent>
       </Tabs>
@@ -387,7 +407,7 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(material?.name || "");
   const [mainCategory, setMainCategory] = useState(material?.main_category || "食材");
-  const [subCategory, setSubCategory] = useState(material?.sub_category || "其他");
+  const [subCategory, setSubCategory] = useState(material?.sub_category || "咖啡豆");
   const [cost, setCost] = useState(material?.cost?.toString() || "0");
   const [unitPurchase, setUnitPurchase] = useState(material?.unit_purchase || "箱");
   const [unitUsage, setUnitUsage] = useState(material?.unit_usage || "g");
@@ -395,7 +415,6 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
 
   const isEdit = !!material;
 
-  // Map main_category → old enum category for backward compat
   const mapToLegacyCategory = (main: string, sub: string): string => {
     if (sub === "咖啡豆") return "bean";
     if (sub === "乳制品") return "milk";
