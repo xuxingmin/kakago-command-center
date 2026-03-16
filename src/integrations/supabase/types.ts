@@ -559,7 +559,9 @@ export type Database = {
           cost: number
           created_at: string
           id: string
+          main_category: string
           name: string
+          sub_category: string
           unit_purchase: string
           unit_usage: string
           updated_at: string
@@ -570,7 +572,9 @@ export type Database = {
           cost?: number
           created_at?: string
           id?: string
+          main_category?: string
           name: string
+          sub_category?: string
           unit_purchase?: string
           unit_usage?: string
           updated_at?: string
@@ -581,7 +585,9 @@ export type Database = {
           cost?: number
           created_at?: string
           id?: string
+          main_category?: string
           name?: string
+          sub_category?: string
           unit_purchase?: string
           unit_usage?: string
           updated_at?: string
