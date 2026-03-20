@@ -38,9 +38,10 @@ const STATUS_MAP: Record<AppStatus, { label: string; color: string }> = {
 
 interface JoinApplicationsProps {
   onNavigateToStore?: (storeId: string) => void;
+  onPendingCountChange?: (count: number) => void;
 }
 
-export function JoinApplications({ onNavigateToStore }: JoinApplicationsProps) {
+export function JoinApplications({ onNavigateToStore, onPendingCountChange }: JoinApplicationsProps) {
   const [applications, setApplications] = useState<JoinApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -49,6 +50,13 @@ export function JoinApplications({ onNavigateToStore }: JoinApplicationsProps) {
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  useEffect(() => {
+    const pendingCount = applications.filter(
+      (a) => a.status === "pending_contact" || a.status === "submitted"
+    ).length;
+    onPendingCountChange?.(pendingCount);
+  }, [applications, onPendingCountChange]);
 
   const DEMO_APPLICATIONS: JoinApplication[] = [
     {
