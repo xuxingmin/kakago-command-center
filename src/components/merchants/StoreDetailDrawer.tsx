@@ -357,78 +357,8 @@ export function StoreDetailDrawer({
           </TabsContent>
 
           {/* Tab E: 账号管理 */}
-          <TabsContent value="accounts" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">管理该门店下的员工账号</p>
-              <Button size="sm">
-                <UserPlus className="w-4 h-4 mr-2" />
-                新建账号
-              </Button>
-            </div>
-
-            <div className="border border-border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>账号名</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell className="font-medium">{account.name}</TableCell>
-                      <TableCell>{account.role}</TableCell>
-                      <TableCell>
-                        <Switch checked={account.enabled} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <RotateCcw className="w-4 h-4 mr-1" />
-                          重置密码
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* 登录日志 */}
-            <div className="pt-4 border-t border-border">
-              <p className="text-sm font-medium mb-3">登录日志</p>
-              <div className="border border-border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      <TableHead className="text-xs">时间</TableHead>
-                      <TableHead className="text-xs">账号</TableHead>
-                      <TableHead className="text-xs">IP</TableHead>
-                      <TableHead className="text-xs">结果</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockLogs.map((log, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-mono text-xs">{log.time}</TableCell>
-                        <TableCell className="text-xs">{log.account}</TableCell>
-                        <TableCell className="font-mono text-xs">{log.ip}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={log.result === "成功" ? "default" : "destructive"}
-                            className={log.result === "成功" ? "bg-green-500/20 text-green-500 text-xs" : "text-xs"}
-                          >
-                            {log.result}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+          <TabsContent value="accounts">
+            <AccountsTab storeId={formData.id} />
           </TabsContent>
         </Tabs>
       </SheetContent>
