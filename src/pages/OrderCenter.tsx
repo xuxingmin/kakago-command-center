@@ -82,16 +82,16 @@ export default function OrderCenter() {
     try {
       const rows = filtered.map((o: any) => ({
         "订单号": o.order_no,
-        "门店": (o.stores as any)?.name || "-",
         "下单时间": format(new Date(o.created_at), "yyyy-MM-dd HH:mm:ss"),
         "商品总额": Number(o.total_amount).toFixed(2),
         "优惠券": (o.coupons as any)?.name || "-",
         "券抵扣": Number(o.coupon_discount || 0).toFixed(2),
-        "实付金额": (Number(o.total_amount) - Number(o.coupon_discount || 0)).toFixed(2),
+        "KAKA豆抵扣": Number(o.kaka_bean_discount || 0).toFixed(2),
+        "消耗豆数": Number(o.kaka_bean_count || 0),
+        "实付金额": (Number(o.total_amount) - Number(o.coupon_discount || 0) - Number(o.kaka_bean_discount || 0)).toFixed(2),
+        "支付方式": o.payment_method || "微信支付",
+        "返豆": Number(o.bean_reward || 0),
         "状态": statusMap[o.status]?.label || o.status,
-        "客户": o.customer_name || "-",
-        "电话": o.customer_phone || "-",
-        "备注": o.notes || "-",
       }));
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(rows);
