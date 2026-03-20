@@ -324,6 +324,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          bean_reward: number | null
           coupon_discount: number | null
           coupon_id: string | null
           created_at: string
@@ -331,8 +332,11 @@ export type Database = {
           customer_phone: string | null
           id: string
           items: Json
+          kaka_bean_count: number | null
+          kaka_bean_discount: number | null
           notes: string | null
           order_no: string
+          payment_method: string | null
           status: Database["public"]["Enums"]["order_status"]
           store_id: string
           total_amount: number
@@ -340,6 +344,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          bean_reward?: number | null
           coupon_discount?: number | null
           coupon_id?: string | null
           created_at?: string
@@ -347,8 +352,11 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           items?: Json
+          kaka_bean_count?: number | null
+          kaka_bean_discount?: number | null
           notes?: string | null
           order_no: string
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           store_id: string
           total_amount?: number
@@ -356,6 +364,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          bean_reward?: number | null
           coupon_discount?: number | null
           coupon_id?: string | null
           created_at?: string
@@ -363,8 +372,11 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           items?: Json
+          kaka_bean_count?: number | null
+          kaka_bean_discount?: number | null
           notes?: string | null
           order_no?: string
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string
           total_amount?: number
