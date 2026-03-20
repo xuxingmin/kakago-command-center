@@ -38,9 +38,10 @@ const STATUS_MAP: Record<AppStatus, { label: string; color: string }> = {
 
 interface JoinApplicationsProps {
   onNavigateToStore?: (storeId: string) => void;
+  onPendingCountChange?: (count: number) => void;
 }
 
-export function JoinApplications({ onNavigateToStore }: JoinApplicationsProps) {
+export function JoinApplications({ onNavigateToStore, onPendingCountChange }: JoinApplicationsProps) {
   const [applications, setApplications] = useState<JoinApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
