@@ -268,11 +268,16 @@ export default function OrderCenter() {
                   const beanReward = Number(o.bean_reward || 0);
                   const paymentMethod = o.payment_method || "微信支付";
                   const st = statusMap[o.status] || statusMap.pending;
+                  const items = Array.isArray(o.items) ? o.items : [];
+                  const itemsSummary = items.map((it: any) => `${it.name} x${it.qty}`).join(", ");
                   return (
                     <TableRow key={o.id} className="hover:bg-primary/5">
                       <TableCell className="font-mono text-xs py-2">{o.order_no}</TableCell>
                       <TableCell className="font-mono text-xs py-2 text-muted-foreground">
                         {format(new Date(o.created_at), "MM-dd HH:mm")}
+                      </TableCell>
+                      <TableCell className="text-xs py-2 text-muted-foreground max-w-[180px] truncate" title={itemsSummary}>
+                        {itemsSummary || "-"}
                       </TableCell>
                       <TableCell className="font-mono text-xs py-2 text-right text-success">
                         ¥{Number(o.total_amount).toFixed(2)}
