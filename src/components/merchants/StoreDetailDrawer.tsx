@@ -34,6 +34,15 @@ import { StoreData } from "./StoreBlock";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// 模拟订单数据
+const mockOrders = [
+  { id: "ORD20240115001", time: "2024-01-15 14:32:15", items: "美式咖啡 x2, 拿铁 x1", amount: 78, status: "completed" },
+  { id: "ORD20240115002", time: "2024-01-15 14:28:42", items: "卡布奇诺 x1", amount: 32, status: "completed" },
+  { id: "ORD20240115003", time: "2024-01-15 14:15:33", items: "摩卡 x2, 美式咖啡 x1", amount: 86, status: "completed" },
+  { id: "ORD20240115004", time: "2024-01-15 14:05:21", items: "拿铁 x3", amount: 87, status: "preparing" },
+  { id: "ORD20240115005", time: "2024-01-15 13:58:10", items: "冰美式 x1, 热拿铁 x1", amount: 54, status: "completed" },
+];
+
 // 模拟日志数据
 const mockLogs = [
   { time: "2024-01-15 09:32:15", account: "13800138000", ip: "192.168.1.105", result: "成功" },
