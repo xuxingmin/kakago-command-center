@@ -272,6 +272,14 @@ interface StoreDetailDrawerProps {
   onSave: (store: StoreData) => void;
   onDelete: (id: string) => void;
 }
+
+export function StoreDetailDrawer({
+  store,
+  open,
+  onOpenChange,
+  onSave,
+  onDelete,
+}: StoreDetailDrawerProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<StoreData | null>(null);
 
