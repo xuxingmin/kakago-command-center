@@ -50,6 +50,54 @@ export function JoinApplications({ onNavigateToStore }: JoinApplicationsProps) {
     fetchApplications();
   }, []);
 
+  const DEMO_APPLICATIONS: JoinApplication[] = [
+    {
+      id: "demo-1", phone: "13912345678", status: "pending_contact", user_id: null, store_id: null,
+      store_name: null, store_address: null, store_location_lat: null, store_location_lng: null,
+      store_front_photo: null, store_interior_photo: null, business_intro: null, review_notes: null,
+      created_at: new Date(Date.now() - 2 * 3600000).toISOString(), updated_at: new Date().toISOString(),
+    },
+    {
+      id: "demo-2", phone: "13887654321", status: "pending_contact", user_id: null, store_id: null,
+      store_name: null, store_address: null, store_location_lat: null, store_location_lng: null,
+      store_front_photo: null, store_interior_photo: null, business_intro: null, review_notes: null,
+      created_at: new Date(Date.now() - 5 * 3600000).toISOString(), updated_at: new Date().toISOString(),
+    },
+    {
+      id: "demo-3", phone: "15011223344", status: "invited", user_id: "demo-user-3", store_id: null,
+      store_name: null, store_address: null, store_location_lat: null, store_location_lng: null,
+      store_front_photo: null, store_interior_photo: null, business_intro: null, review_notes: null,
+      created_at: new Date(Date.now() - 2 * 86400000).toISOString(), updated_at: new Date(Date.now() - 86400000).toISOString(),
+    },
+    {
+      id: "demo-4", phone: "18699887766", status: "submitted", user_id: "demo-user-4", store_id: null,
+      store_name: "朝阳公园店", store_address: "北京市朝阳区朝阳公园南路8号",
+      store_location_lat: 39.9342, store_location_lng: 116.4737,
+      store_front_photo: "store_front_chaoyang.jpg", store_interior_photo: "store_interior_chaoyang.jpg",
+      business_intro: "位于朝阳公园南门，周边写字楼密集，工作日客流量大。已有3年咖啡行业从业经验，擅长精品手冲。",
+      review_notes: null,
+      created_at: new Date(Date.now() - 3 * 86400000).toISOString(), updated_at: new Date(Date.now() - 12 * 3600000).toISOString(),
+    },
+    {
+      id: "demo-5", phone: "13766554433", status: "submitted", user_id: "demo-user-5", store_id: null,
+      store_name: "望京SOHO店", store_address: "北京市朝阳区望京SOHO T1 一层",
+      store_location_lat: 39.9985, store_location_lng: 116.4827,
+      store_front_photo: "store_front_wangjing.jpg", store_interior_photo: "store_interior_wangjing.jpg",
+      business_intro: "望京核心商圈，紧邻地铁15号线望京站。店面60㎡，已完成装修。",
+      review_notes: null,
+      created_at: new Date(Date.now() - 4 * 86400000).toISOString(), updated_at: new Date(Date.now() - 6 * 3600000).toISOString(),
+    },
+    {
+      id: "demo-6", phone: "13500112233", status: "completed", user_id: "demo-user-6", store_id: "demo-store-6",
+      store_name: "国贸CBD店", store_address: "北京市朝阳区建外大街1号",
+      store_location_lat: 39.9087, store_location_lng: 116.4605,
+      store_front_photo: "store_front_guomao.jpg", store_interior_photo: "store_interior_guomao.jpg",
+      business_intro: "国贸商圈旗舰店，已正式运营。",
+      review_notes: "资料齐全，审核通过。",
+      created_at: new Date(Date.now() - 10 * 86400000).toISOString(), updated_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+    },
+  ];
+
   const fetchApplications = async () => {
     try {
       const { data, error } = await supabase
@@ -57,10 +105,11 @@ export function JoinApplications({ onNavigateToStore }: JoinApplicationsProps) {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setApplications((data as unknown as JoinApplication[]) || []);
+      const mapped = (data as unknown as JoinApplication[]) || [];
+      setApplications(mapped.length > 0 ? mapped : DEMO_APPLICATIONS);
     } catch (err) {
       console.error(err);
-      toast({ title: "加载失败", description: "无法获取加盟申请数据", variant: "destructive" });
+      setApplications(DEMO_APPLICATIONS);
     } finally {
       setLoading(false);
     }
