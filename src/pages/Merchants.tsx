@@ -14,6 +14,7 @@ export default function Merchants() {
   const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("matrix");
+  const [pendingAppCount, setPendingAppCount] = useState(0);
 
   useEffect(() => {
     fetchStores();

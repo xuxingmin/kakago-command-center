@@ -51,6 +51,13 @@ export function JoinApplications({ onNavigateToStore, onPendingCountChange }: Jo
     fetchApplications();
   }, []);
 
+  useEffect(() => {
+    const pendingCount = applications.filter(
+      (a) => a.status === "pending_contact" || a.status === "submitted"
+    ).length;
+    onPendingCountChange?.(pendingCount);
+  }, [applications, onPendingCountChange]);
+
   const DEMO_APPLICATIONS: JoinApplication[] = [
     {
       id: "demo-1", phone: "13912345678", status: "pending_contact", user_id: null, store_id: null,
