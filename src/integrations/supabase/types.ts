@@ -204,6 +204,68 @@ export type Database = {
           },
         ]
       }
+      join_applications: {
+        Row: {
+          business_intro: string | null
+          created_at: string
+          id: string
+          phone: string
+          review_notes: string | null
+          status: Database["public"]["Enums"]["join_application_status"]
+          store_address: string | null
+          store_front_photo: string | null
+          store_id: string | null
+          store_interior_photo: string | null
+          store_location_lat: number | null
+          store_location_lng: number | null
+          store_name: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_intro?: string | null
+          created_at?: string
+          id?: string
+          phone: string
+          review_notes?: string | null
+          status?: Database["public"]["Enums"]["join_application_status"]
+          store_address?: string | null
+          store_front_photo?: string | null
+          store_id?: string | null
+          store_interior_photo?: string | null
+          store_location_lat?: number | null
+          store_location_lng?: number | null
+          store_name?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_intro?: string | null
+          created_at?: string
+          id?: string
+          phone?: string
+          review_notes?: string | null
+          status?: Database["public"]["Enums"]["join_application_status"]
+          store_address?: string | null
+          store_front_photo?: string | null
+          store_id?: string | null
+          store_interior_photo?: string | null
+          store_location_lat?: number | null
+          store_location_lng?: number | null
+          store_name?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "join_applications_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           coupon_id: string | null
@@ -968,6 +1030,11 @@ export type Database = {
         | "coupon_cost"
         | "other_income"
         | "other_expense"
+      join_application_status:
+        | "pending_contact"
+        | "invited"
+        | "submitted"
+        | "completed"
       material_category: "bean" | "milk" | "packaging" | "syrup" | "other"
       order_status:
         | "pending"
@@ -1122,6 +1189,12 @@ export const Constants = {
         "coupon_cost",
         "other_income",
         "other_expense",
+      ],
+      join_application_status: [
+        "pending_contact",
+        "invited",
+        "submitted",
+        "completed",
       ],
       material_category: ["bean", "milk", "packaging", "syrup", "other"],
       order_status: [
