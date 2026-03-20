@@ -144,7 +144,6 @@ export default function Merchants() {
     </div>
   );
 }
-  const [loading, setLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
