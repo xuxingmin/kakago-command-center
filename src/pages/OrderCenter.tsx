@@ -254,7 +254,7 @@ export default function OrderCenter() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
                     暂无订单数据
                   </TableCell>
                 </TableRow>
