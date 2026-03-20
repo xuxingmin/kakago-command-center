@@ -957,7 +957,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "merchant" | "public_user"
+      app_role: "admin" | "merchant" | "public_user" | "staff"
       coupon_status: "active" | "used" | "expired"
       coupon_type: "fixed" | "discount" | "freebie"
       financial_tx_type:
@@ -1111,7 +1111,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "merchant", "public_user"],
+      app_role: ["admin", "merchant", "public_user", "staff"],
       coupon_status: ["active", "used", "expired"],
       coupon_type: ["fixed", "discount", "freebie"],
       financial_tx_type: [
