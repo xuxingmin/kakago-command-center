@@ -2,15 +2,18 @@ import { useState, useEffect } from "react";
 import { StoreKPIHeader } from "@/components/merchants/StoreKPIHeader";
 import { StoreBlock, StoreData } from "@/components/merchants/StoreBlock";
 import { StoreDetailDrawer } from "@/components/merchants/StoreDetailDrawer";
+import { JoinApplications } from "@/components/merchants/JoinApplications";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function Merchants() {
   const [stores, setStores] = useState<StoreData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("matrix");
 
   useEffect(() => {
     fetchStores();
@@ -22,7 +25,6 @@ export default function Merchants() {
         .from("stores")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setStores(data || []);
     } catch (error) {
@@ -114,6 +116,17 @@ export default function Merchants() {
     }
   };
 
+  const handleNavigateToStore = (storeId: string) => {
+    setActiveTab("matrix");
+    const store = stores.find((s) => s.id === storeId);
+    if (store) {
+      setTimeout(() => {
+        setSelectedStore(store);
+        setDrawerOpen(true);
+      }, 300);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-background">
@@ -125,15 +138,27 @@ export default function Merchants() {
   return (
     <div className="h-full flex flex-col gap-6 p-2 overflow-auto bg-background">
       <StoreKPIHeader totalStores={totalStores} openStores={activeStores} />
-      <div className="flex-1">
-        <h2 className="text-lg font-semibold text-foreground mb-4">门店矩阵</h2>
-        <div className="grid grid-cols-8 gap-4">
-          <StoreBlock isAddButton onClick={handleAddStore} />
-          {stores.map((store) => (
-            <StoreBlock key={store.id} store={store} onClick={() => handleStoreClick(store)} />
-          ))}
-        </div>
-      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <TabsList className="w-fit">
+          <TabsTrigger value="matrix">门店矩阵</TabsTrigger>
+          <TabsTrigger value="applications">加盟申请管理</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="matrix" className="flex-1 mt-4">
+          <div className="grid grid-cols-8 gap-4">
+            <StoreBlock isAddButton onClick={handleAddStore} />
+            {stores.map((store) => (
+              <StoreBlock key={store.id} store={store} onClick={() => handleStoreClick(store)} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="applications" className="flex-1 mt-4">
+          <JoinApplications onNavigateToStore={handleNavigateToStore} />
+        </TabsContent>
+      </Tabs>
+
       <StoreDetailDrawer
         store={selectedStore}
         open={drawerOpen}
