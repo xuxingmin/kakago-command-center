@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { StoreKPIHeader } from "@/components/merchants/StoreKPIHeader";
 import { StoreBlock, StoreData } from "@/components/merchants/StoreBlock";
 import { StoreDetailDrawer } from "@/components/merchants/StoreDetailDrawer";
+import { AccountManagement } from "@/components/merchants/AccountManagement";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Store, Users } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function Merchants() {
   const [stores, setStores] = useState<StoreData[]>([]);
@@ -12,7 +14,6 @@ export default function Merchants() {
   const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // 从数据库加载门店数据
   useEffect(() => {
     fetchStores();
   }, []);
@@ -66,54 +67,34 @@ export default function Merchants() {
   const handleSave = async (store: StoreData) => {
     try {
       const exists = stores.find((s) => s.id === store.id);
-      
       if (exists) {
-        // 更新现有门店
         const { error } = await supabase
           .from("stores")
           .update({
-            name: store.name,
-            address: store.address,
-            contact_phone: store.contact_phone,
-            status: store.status,
-            head_barista: store.head_barista,
-            coffee_machine_model: store.coffee_machine_model,
-            grinder_model: store.grinder_model,
-            store_description: store.store_description,
-            store_message: store.store_message,
-            longitude: store.longitude,
-            latitude: store.latitude,
+            name: store.name, address: store.address, contact_phone: store.contact_phone,
+            status: store.status, head_barista: store.head_barista,
+            coffee_machine_model: store.coffee_machine_model, grinder_model: store.grinder_model,
+            store_description: store.store_description, store_message: store.store_message,
+            longitude: store.longitude, latitude: store.latitude,
           })
           .eq("id", store.id);
-
         if (error) throw error;
         setStores((prev) => prev.map((s) => (s.id === store.id ? store : s)));
       } else {
-        // 新增门店
         const { data, error } = await supabase
           .from("stores")
           .insert({
-            name: store.name,
-            address: store.address,
-            contact_phone: store.contact_phone,
-            status: store.status,
-            head_barista: store.head_barista,
-            coffee_machine_model: store.coffee_machine_model,
-            grinder_model: store.grinder_model,
-            store_description: store.store_description,
-            store_message: store.store_message,
-            longitude: store.longitude,
-            latitude: store.latitude,
+            name: store.name, address: store.address, contact_phone: store.contact_phone,
+            status: store.status, head_barista: store.head_barista,
+            coffee_machine_model: store.coffee_machine_model, grinder_model: store.grinder_model,
+            store_description: store.store_description, store_message: store.store_message,
+            longitude: store.longitude, latitude: store.latitude,
           })
           .select()
           .single();
-
         if (error) throw error;
-        if (data) {
-          setStores((prev) => [data, ...prev]);
-        }
+        if (data) setStores((prev) => [data, ...prev]);
       }
-
       toast({ title: "保存成功", description: `门店 ${store.name} 已更新` });
       setDrawerOpen(false);
     } catch (error) {
@@ -124,13 +105,8 @@ export default function Merchants() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("stores")
-        .delete()
-        .eq("id", id);
-
+      const { error } = await supabase.from("stores").delete().eq("id", id);
       if (error) throw error;
-      
       setStores((prev) => prev.filter((s) => s.id !== id));
       toast({ title: "删除成功", description: "门店已删除" });
       setDrawerOpen(false);
@@ -142,43 +118,50 @@ export default function Merchants() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-black">
+      <div className="h-full flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col gap-6 p-2 overflow-auto bg-black">
-      {/* 顶部 KPI */}
-      <StoreKPIHeader totalStores={totalStores} openStores={activeStores} />
+    <div className="h-full flex flex-col gap-4 p-2 overflow-auto bg-background">
+      <Tabs defaultValue="stores" className="flex-1 flex flex-col">
+        <TabsList className="bg-card border border-border w-fit">
+          <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <Store className="w-4 h-4" />
+            门店管理
+          </TabsTrigger>
+          <TabsTrigger value="accounts" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <Users className="w-4 h-4" />
+            账号管理
+          </TabsTrigger>
+        </TabsList>
 
-      {/* 门店网格 */}
-      <div className="flex-1">
-        <h2 className="text-lg font-semibold text-foreground mb-4">门店矩阵</h2>
-        <div className="grid grid-cols-8 gap-4">
-          {/* 添加门店按钮 */}
-          <StoreBlock isAddButton onClick={handleAddStore} />
-          
-          {/* 门店方块 */}
-          {stores.map((store) => (
-            <StoreBlock
-              key={store.id}
-              store={store}
-              onClick={() => handleStoreClick(store)}
-            />
-          ))}
-        </div>
-      </div>
+        <TabsContent value="stores" className="flex-1 flex flex-col gap-6 mt-4">
+          <StoreKPIHeader totalStores={totalStores} openStores={activeStores} />
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-foreground mb-4">门店矩阵</h2>
+            <div className="grid grid-cols-8 gap-4">
+              <StoreBlock isAddButton onClick={handleAddStore} />
+              {stores.map((store) => (
+                <StoreBlock key={store.id} store={store} onClick={() => handleStoreClick(store)} />
+              ))}
+            </div>
+          </div>
+          <StoreDetailDrawer
+            store={selectedStore}
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            onSave={handleSave}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
 
-      {/* 详情抽屉 */}
-      <StoreDetailDrawer
-        store={selectedStore}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        onSave={handleSave}
-        onDelete={handleDelete}
-      />
+        <TabsContent value="accounts" className="flex-1 mt-4">
+          <AccountManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
