@@ -167,7 +167,7 @@ export function MarketingAnalytics() {
       <Tabs defaultValue="campaigns" className="flex-1 flex flex-col">
         <TabsList className="bg-muted w-fit">
           <TabsTrigger value="campaigns">按活动分析</TabsTrigger>
-          <TabsTrigger value="coupons">按券模板分析</TabsTrigger>
+          <TabsTrigger value="coupons">按券种分析</TabsTrigger>
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-3">
