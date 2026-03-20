@@ -208,9 +208,23 @@ export default function OrderCenter() {
         </div>
         <div className="w-px h-4 bg-secondary" />
         <div>
+          <span className="text-muted-foreground">豆抵扣</span>
+          <span className="font-mono font-bold text-amber-400 ml-1">
+            ¥{filtered.reduce((s: number, o: any) => s + Number(o.kaka_bean_discount || 0), 0).toLocaleString()}
+          </span>
+        </div>
+        <div className="w-px h-4 bg-secondary" />
+        <div>
           <span className="text-muted-foreground">实付</span>
           <span className="font-mono font-bold text-primary ml-1">
-            ¥{filtered.reduce((s: number, o: any) => s + Number(o.total_amount) - Number(o.coupon_discount || 0), 0).toLocaleString()}
+            ¥{filtered.reduce((s: number, o: any) => s + Number(o.total_amount) - Number(o.coupon_discount || 0) - Number(o.kaka_bean_discount || 0), 0).toLocaleString()}
+          </span>
+        </div>
+        <div className="w-px h-4 bg-secondary" />
+        <div>
+          <span className="text-muted-foreground">返豆</span>
+          <span className="font-mono font-bold text-cyan-400 ml-1">
+            {filtered.reduce((s: number, o: any) => s + Number(o.bean_reward || 0), 0).toLocaleString()}
           </span>
         </div>
       </div>
