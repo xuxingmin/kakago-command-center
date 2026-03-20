@@ -241,6 +241,7 @@ export default function OrderCenter() {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="text-xs w-[130px]">订单号</TableHead>
                 <TableHead className="text-xs">下单时间</TableHead>
+                <TableHead className="text-xs">商品</TableHead>
                 <TableHead className="text-xs text-right">商品总额</TableHead>
                 <TableHead className="text-xs text-right">优惠券抵扣</TableHead>
                 <TableHead className="text-xs text-right">KAKA豆抵扣</TableHead>
@@ -253,7 +254,7 @@ export default function OrderCenter() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
                     暂无订单数据
                   </TableCell>
                 </TableRow>
@@ -267,11 +268,16 @@ export default function OrderCenter() {
                   const beanReward = Number(o.bean_reward || 0);
                   const paymentMethod = o.payment_method || "微信支付";
                   const st = statusMap[o.status] || statusMap.pending;
+                  const items = Array.isArray(o.items) ? o.items : [];
+                  const itemsSummary = items.map((it: any) => `${it.name} x${it.qty}`).join(", ");
                   return (
                     <TableRow key={o.id} className="hover:bg-primary/5">
                       <TableCell className="font-mono text-xs py-2">{o.order_no}</TableCell>
                       <TableCell className="font-mono text-xs py-2 text-muted-foreground">
                         {format(new Date(o.created_at), "MM-dd HH:mm")}
+                      </TableCell>
+                      <TableCell className="text-xs py-2 text-muted-foreground max-w-[180px] truncate" title={itemsSummary}>
+                        {itemsSummary || "-"}
                       </TableCell>
                       <TableCell className="font-mono text-xs py-2 text-right text-success">
                         ¥{Number(o.total_amount).toFixed(2)}
