@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2, Phone, Send } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,30 +32,7 @@ import {
 } from "@/components/ui/table";
 import { StoreData } from "./StoreBlock";
 import { toast } from "@/hooks/use-toast";
-
-interface StoreDetailDrawerProps {
-  store: StoreData | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (store: StoreData) => void;
-  onDelete: (id: string) => void;
-}
-
-// 模拟订单数据
-const mockOrders = [
-  { id: "ORD20240115001", time: "2024-01-15 14:32:15", items: "美式咖啡 x2, 拿铁 x1", amount: 78, status: "completed" },
-  { id: "ORD20240115002", time: "2024-01-15 14:28:42", items: "卡布奇诺 x1", amount: 32, status: "completed" },
-  { id: "ORD20240115003", time: "2024-01-15 14:15:33", items: "摩卡 x2, 美式咖啡 x1", amount: 86, status: "completed" },
-  { id: "ORD20240115004", time: "2024-01-15 14:05:21", items: "拿铁 x3", amount: 87, status: "preparing" },
-  { id: "ORD20240115005", time: "2024-01-15 13:58:10", items: "冰美式 x1, 热拿铁 x1", amount: 54, status: "completed" },
-];
-
-// 模拟账号数据
-const mockAccounts = [
-  { id: "1", name: "张店长", role: "店长", enabled: true },
-  { id: "2", name: "李收银", role: "收银员", enabled: true },
-  { id: "3", name: "王调饮", role: "调饮师", enabled: false },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 // 模拟日志数据
 const mockLogs = [
