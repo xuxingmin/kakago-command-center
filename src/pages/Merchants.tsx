@@ -143,7 +143,14 @@ export default function Merchants() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="w-fit">
           <TabsTrigger value="matrix">门店矩阵</TabsTrigger>
-          <TabsTrigger value="applications">加盟申请管理</TabsTrigger>
+          <TabsTrigger value="applications" className="relative">
+            加盟申请管理
+            {pendingAppCount > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                {pendingAppCount}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="matrix" className="flex-1 mt-4">
