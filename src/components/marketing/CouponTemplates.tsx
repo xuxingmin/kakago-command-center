@@ -62,15 +62,6 @@ export function CouponTemplates() {
 
   return (
     <div className="space-y-4">
-      <MarketingKPIRow
-        data={{
-          totalCoupons: coupons.length,
-          activeCoupons: coupons.filter((c) => c.status === "active").length,
-          totalIssued,
-          redemptionRate,
-        }}
-      />
-
       <div className="flex justify-end">
         <Button size="sm" onClick={openCreate}>
           <Plus className="w-4 h-4 mr-1" />

@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CouponTemplates } from "@/components/marketing/CouponTemplates";
 import { CampaignList } from "@/components/marketing/CampaignList";
-import { DistributionLog } from "@/components/marketing/DistributionLog";
+import { MarketingAnalytics } from "@/components/marketing/MarketingAnalytics";
 
 export default function Marketing() {
   return (
@@ -10,12 +10,16 @@ export default function Marketing() {
         <h1 className="text-lg font-semibold text-foreground">营销中心</h1>
       </div>
 
-      <Tabs defaultValue="coupons" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue="analytics" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="bg-muted w-fit">
+          <TabsTrigger value="analytics">营销效果分析</TabsTrigger>
           <TabsTrigger value="coupons">券模板管理</TabsTrigger>
           <TabsTrigger value="campaigns">营销活动</TabsTrigger>
-          <TabsTrigger value="logs">投放记录</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics" className="flex-1 overflow-auto mt-4">
+          <MarketingAnalytics />
+        </TabsContent>
 
         <TabsContent value="coupons" className="flex-1 overflow-auto mt-4">
           <CouponTemplates />
@@ -23,10 +27,6 @@ export default function Marketing() {
 
         <TabsContent value="campaigns" className="flex-1 overflow-auto mt-4">
           <CampaignList />
-        </TabsContent>
-
-        <TabsContent value="logs" className="flex-1 overflow-auto mt-4">
-          <DistributionLog />
         </TabsContent>
       </Tabs>
     </div>
