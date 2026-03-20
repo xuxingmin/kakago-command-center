@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Copy, Trash2, UserPlus, RotateCcw, ShoppingBag, TrendingUp, Clock, CheckCircle2, Phone, Send } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,14 +32,7 @@ import {
 } from "@/components/ui/table";
 import { StoreData } from "./StoreBlock";
 import { toast } from "@/hooks/use-toast";
-
-interface StoreDetailDrawerProps {
-  store: StoreData | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (store: StoreData) => void;
-  onDelete: (id: string) => void;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 // 模拟订单数据
 const mockOrders = [
@@ -43,19 +43,244 @@ const mockOrders = [
   { id: "ORD20240115005", time: "2024-01-15 13:58:10", items: "冰美式 x1, 热拿铁 x1", amount: 54, status: "completed" },
 ];
 
-// 模拟账号数据
-const mockAccounts = [
-  { id: "1", name: "张店长", role: "店长", enabled: true },
-  { id: "2", name: "李收银", role: "收银员", enabled: true },
-  { id: "3", name: "王调饮", role: "调饮师", enabled: false },
-];
-
 // 模拟日志数据
 const mockLogs = [
-  { time: "2024-01-15 09:32:15", account: "张店长", ip: "192.168.1.105", result: "成功" },
-  { time: "2024-01-15 08:15:42", account: "李收银", ip: "192.168.1.108", result: "成功" },
+  { time: "2024-01-15 09:32:15", account: "13800138000", ip: "192.168.1.105", result: "成功" },
+  { time: "2024-01-15 08:15:42", account: "13900139000", ip: "192.168.1.108", result: "成功" },
   { time: "2024-01-14 22:18:33", account: "未知", ip: "45.33.12.89", result: "失败" },
 ];
+
+const roleLabels: Record<string, string> = {
+  merchant: "店主",
+  staff: "店员",
+};
+
+// ─── AccountsTab (real data + create owner dialog) ───
+function AccountsTab({ storeId }: { storeId: string }) {
+  const [accounts, setAccounts] = useState<
+    { id: string; phone: string; role: string; enabled: boolean }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const fetchAccounts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("id, user_id, role, store_id")
+      .eq("store_id", storeId)
+      .in("role", ["merchant", "staff"]);
+
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch phones from profiles
+    const userIds = (data || []).map((r) => r.user_id);
+    let profileMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, phone")
+        .in("user_id", userIds);
+      (profiles || []).forEach((p) => {
+        if (p.phone) profileMap[p.user_id] = p.phone;
+      });
+    }
+
+    setAccounts(
+      (data || []).map((r) => ({
+        id: r.id,
+        phone: profileMap[r.user_id] || "—",
+        role: r.role,
+        enabled: true,
+      }))
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [storeId]);
+
+  const handleCreate = async () => {
+    if (!/^1\d{10}$/.test(newPhone)) {
+      toast({ title: "请输入合法的11位手机号", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-store-owner", {
+        body: { phone: newPhone, store_id: storeId },
+      });
+
+      if (error) throw error;
+      if (data && !data.success) throw new Error(data.error);
+
+      toast({
+        title: "店主账号创建成功",
+        description: `密码设置短信已发送至 ${newPhone}`,
+      });
+      setDialogOpen(false);
+      setNewPhone("");
+      fetchAccounts();
+    } catch (err: any) {
+      toast({ title: "创建失败", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">管理该门店下的店主与店员账号</p>
+        <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          创建店主
+        </Button>
+      </div>
+
+      <div className="border border-border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30">
+              <TableHead className="text-xs">账号名（手机号）</TableHead>
+              <TableHead className="text-xs">角色</TableHead>
+              <TableHead className="text-xs">状态</TableHead>
+              <TableHead className="text-xs text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-6">
+                  加载中…
+                </TableCell>
+              </TableRow>
+            ) : accounts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-6">
+                  暂无账号
+                </TableCell>
+              </TableRow>
+            ) : (
+              accounts.map((account) => (
+                <TableRow key={account.id}>
+                  <TableCell className="font-mono text-sm">{account.phone}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        account.role === "merchant"
+                          ? "bg-primary/20 text-primary border-primary/30 text-xs"
+                          : "bg-muted text-muted-foreground border-border text-xs"
+                      }
+                    >
+                      {roleLabels[account.role] || account.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={account.enabled} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      <RotateCcw className="w-3 h-3 mr-1" />
+                      重置密码
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* 登录日志 */}
+      <div className="pt-4 border-t border-border">
+        <p className="text-sm font-medium mb-3">登录日志</p>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead className="text-xs">时间</TableHead>
+                <TableHead className="text-xs">账号</TableHead>
+                <TableHead className="text-xs">IP</TableHead>
+                <TableHead className="text-xs">结果</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mockLogs.map((log, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="font-mono text-xs">{log.time}</TableCell>
+                  <TableCell className="font-mono text-xs">{log.account}</TableCell>
+                  <TableCell className="font-mono text-xs">{log.ip}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={log.result === "成功" ? "default" : "destructive"}
+                      className={log.result === "成功" ? "bg-green-500/20 text-green-500 text-xs" : "text-xs"}
+                    >
+                      {log.result}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* 创建店主弹窗 */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-primary" />
+              创建店主账号
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>手机号（11位）</Label>
+              <Input
+                placeholder="请输入店主手机号"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                maxLength={11}
+                className="font-mono tracking-wider"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>角色</Label>
+              <Input value="店主" readOnly className="bg-muted text-muted-foreground" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <Send className="w-3 h-3 inline mr-1" />
+              创建成功后，系统将自动向该手机号发送密码设置短信。
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+            <Button onClick={handleCreate} disabled={creating || newPhone.length !== 11}>
+              {creating ? "创建中…" : "确认创建"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+interface StoreDetailDrawerProps {
+  store: StoreData | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (store: StoreData) => void;
+  onDelete: (id: string) => void;
+}
 
 export function StoreDetailDrawer({
   store,
@@ -373,78 +598,8 @@ export function StoreDetailDrawer({
           </TabsContent>
 
           {/* Tab E: 账号管理 */}
-          <TabsContent value="accounts" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">管理该门店下的员工账号</p>
-              <Button size="sm">
-                <UserPlus className="w-4 h-4 mr-2" />
-                新建账号
-              </Button>
-            </div>
-
-            <div className="border border-border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>账号名</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell className="font-medium">{account.name}</TableCell>
-                      <TableCell>{account.role}</TableCell>
-                      <TableCell>
-                        <Switch checked={account.enabled} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <RotateCcw className="w-4 h-4 mr-1" />
-                          重置密码
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* 登录日志 */}
-            <div className="pt-4 border-t border-border">
-              <p className="text-sm font-medium mb-3">登录日志</p>
-              <div className="border border-border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      <TableHead className="text-xs">时间</TableHead>
-                      <TableHead className="text-xs">账号</TableHead>
-                      <TableHead className="text-xs">IP</TableHead>
-                      <TableHead className="text-xs">结果</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockLogs.map((log, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-mono text-xs">{log.time}</TableCell>
-                        <TableCell className="text-xs">{log.account}</TableCell>
-                        <TableCell className="font-mono text-xs">{log.ip}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={log.result === "成功" ? "default" : "destructive"}
-                            className={log.result === "成功" ? "bg-green-500/20 text-green-500 text-xs" : "text-xs"}
-                          >
-                            {log.result}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+          <TabsContent value="accounts">
+            <AccountsTab storeId={formData.id} />
           </TabsContent>
         </Tabs>
       </SheetContent>
