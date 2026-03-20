@@ -163,7 +163,7 @@ export default function Merchants() {
         </TabsContent>
 
         <TabsContent value="applications" className="flex-1 mt-4">
-          <JoinApplications onNavigateToStore={handleNavigateToStore} />
+          <JoinApplications onNavigateToStore={handleNavigateToStore} onPendingCountChange={setPendingAppCount} />
         </TabsContent>
       </Tabs>
 
