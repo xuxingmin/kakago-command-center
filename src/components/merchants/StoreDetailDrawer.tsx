@@ -92,14 +92,23 @@ function AccountsTab({ storeId }: { storeId: string }) {
       });
     }
 
-    setAccounts(
-      (data || []).map((r) => ({
-        id: r.id,
-        phone: profileMap[r.user_id] || "—",
-        role: r.role,
-        enabled: true,
-      }))
-    );
+    const mapped = (data || []).map((r) => ({
+      id: r.id,
+      phone: profileMap[r.user_id] || "—",
+      role: r.role,
+      enabled: true,
+    }));
+
+    // 如果数据库无账号，展示示例数据
+    if (mapped.length === 0) {
+      setAccounts([
+        { id: "demo-1", phone: "13800138001", role: "merchant", enabled: true },
+        { id: "demo-2", phone: "13900139002", role: "staff", enabled: true },
+        { id: "demo-3", phone: "15012345678", role: "staff", enabled: false },
+      ]);
+    } else {
+      setAccounts(mapped);
+    }
     setLoading(false);
   };
 
