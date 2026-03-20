@@ -241,6 +241,7 @@ export default function OrderCenter() {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="text-xs w-[130px]">订单号</TableHead>
                 <TableHead className="text-xs">下单时间</TableHead>
+                <TableHead className="text-xs">商品</TableHead>
                 <TableHead className="text-xs text-right">商品总额</TableHead>
                 <TableHead className="text-xs text-right">优惠券抵扣</TableHead>
                 <TableHead className="text-xs text-right">KAKA豆抵扣</TableHead>
