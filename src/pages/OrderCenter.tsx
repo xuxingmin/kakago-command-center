@@ -239,15 +239,15 @@ export default function OrderCenter() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="text-xs w-[140px]">订单号</TableHead>
-                <TableHead className="text-xs">门店</TableHead>
+                <TableHead className="text-xs w-[130px]">订单号</TableHead>
                 <TableHead className="text-xs">下单时间</TableHead>
                 <TableHead className="text-xs text-right">商品总额</TableHead>
-                <TableHead className="text-xs text-right">优惠抵扣</TableHead>
+                <TableHead className="text-xs text-right">优惠券抵扣</TableHead>
+                <TableHead className="text-xs text-right">KAKA豆抵扣</TableHead>
                 <TableHead className="text-xs text-right">实付金额</TableHead>
+                <TableHead className="text-xs">支付方式</TableHead>
+                <TableHead className="text-xs text-right">返豆</TableHead>
                 <TableHead className="text-xs text-center">状态</TableHead>
-                <TableHead className="text-xs">客户</TableHead>
-                <TableHead className="text-xs">备注</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -261,14 +261,15 @@ export default function OrderCenter() {
                 filtered.map((o: any) => {
                   const couponName = (o.coupons as any)?.name;
                   const couponDiscount = Number(o.coupon_discount || 0);
-                  const actualPay = Number(o.total_amount) - couponDiscount;
+                  const kakaBeanDiscount = Number(o.kaka_bean_discount || 0);
+                  const kakaBeanCount = Number(o.kaka_bean_count || 0);
+                  const actualPay = Number(o.total_amount) - couponDiscount - kakaBeanDiscount;
+                  const beanReward = Number(o.bean_reward || 0);
+                  const paymentMethod = o.payment_method || "微信支付";
                   const st = statusMap[o.status] || statusMap.pending;
                   return (
                     <TableRow key={o.id} className="hover:bg-primary/5">
                       <TableCell className="font-mono text-xs py-2">{o.order_no}</TableCell>
-                      <TableCell className="text-xs py-2 truncate max-w-[120px]">
-                        {(o.stores as any)?.name || "-"}
-                      </TableCell>
                       <TableCell className="font-mono text-xs py-2 text-muted-foreground">
                         {format(new Date(o.created_at), "MM-dd HH:mm")}
                       </TableCell>
@@ -279,7 +280,17 @@ export default function OrderCenter() {
                         {couponDiscount > 0 ? (
                           <span className="text-orange-400">
                             -¥{couponDiscount.toFixed(2)}
-                            {couponName && <span className="text-muted-foreground ml-1">({couponName})</span>}
+                            {couponName && <span className="text-muted-foreground ml-1 text-[10px]">({couponName})</span>}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs py-2 text-right">
+                        {kakaBeanDiscount > 0 ? (
+                          <span className="text-amber-400">
+                            -¥{kakaBeanDiscount.toFixed(2)}
+                            <span className="text-muted-foreground ml-1 text-[10px]">({kakaBeanCount}豆)</span>
                           </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
@@ -288,14 +299,28 @@ export default function OrderCenter() {
                       <TableCell className="font-mono text-xs py-2 text-right font-bold text-primary">
                         ¥{actualPay.toFixed(2)}
                       </TableCell>
+                      <TableCell className="text-xs py-2">
+                        {paymentMethod.includes("+") ? (
+                          <div className="flex flex-wrap gap-0.5">
+                            {paymentMethod.split("+").map((m: string, i: number) => (
+                              <Badge key={i} variant="outline" className="text-[10px] px-1 py-0 border-border">
+                                {m}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">{paymentMethod}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs py-2 text-right">
+                        {beanReward > 0 ? (
+                          <span className="text-cyan-400 font-mono">+{beanReward}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="py-2 text-center">
                         <Badge className={cn("text-[10px]", st.class)}>{st.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs py-2 text-muted-foreground truncate max-w-[80px]">
-                        {o.customer_name || "-"}
-                      </TableCell>
-                      <TableCell className="text-xs py-2 text-muted-foreground truncate max-w-[100px]">
-                        {o.notes || "-"}
                       </TableCell>
                     </TableRow>
                   );
