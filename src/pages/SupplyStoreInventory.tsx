@@ -514,6 +514,7 @@ function SmartReplenishTab({ stores, materials }: { stores: StoreDef[]; material
 function MerchantRequestsTab({ requests, setRequests, stores, materials }: { requests: MerchantRequest[]; setRequests: (r: MerchantRequest[]) => void; stores: StoreDef[]; materials: Record<MaterialKey, MaterialDef> }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingApproval, setEditingApproval] = useState<Record<string, Record<string, number>>>({});
+  const [statusFilter, setStatusFilter] = useState<MerchantRequestStatus | "all">("all");
 
   const getApprovedQty = (reqId: string, mk: string, defaultQty: number) => editingApproval[reqId]?.[mk] ?? defaultQty;
 
@@ -557,20 +558,49 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
     toast({ title: "已导出 Excel" });
   };
 
+  // Sort by time descending
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [requests]);
+
+  // Filter by status
+  const filteredRequests = useMemo(() => {
+    if (statusFilter === "all") return sortedRequests;
+    return sortedRequests.filter(r => r.status === statusFilter);
+  }, [sortedRequests, statusFilter]);
+
+  // Status counts for filter badges
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: requests.length };
+    for (const st of Object.keys(reqStatusMap)) {
+      counts[st] = requests.filter(r => r.status === st).length;
+    }
+    return counts;
+  }, [requests]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="flex gap-2 text-xs">
-          {(Object.keys(reqStatusMap) as MerchantRequestStatus[]).map(st => {
-            const count = requests.filter(r => r.status === st).length;
-            return count > 0 ? <Badge key={st} variant="outline" className={reqStatusMap[st].cls}>{reqStatusMap[st].label} {count}</Badge> : null;
-          })}
+        <div className="flex gap-2 text-xs flex-wrap">
+          <Badge
+            variant="outline"
+            className={`cursor-pointer transition-all ${statusFilter === "all" ? "bg-foreground/20 text-foreground border-foreground/30" : "border-[#333] text-muted-foreground hover:text-foreground"}`}
+            onClick={() => setStatusFilter("all")}
+          >全部 {statusCounts.all}</Badge>
+          {(Object.keys(reqStatusMap) as MerchantRequestStatus[]).map(st => (
+            <Badge
+              key={st}
+              variant="outline"
+              className={`cursor-pointer transition-all ${statusFilter === st ? reqStatusMap[st].cls : "border-[#333] text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setStatusFilter(statusFilter === st ? "all" : st)}
+            >{reqStatusMap[st].label} {statusCounts[st] || 0}</Badge>
+          ))}
         </div>
         <Button variant="outline" size="sm" className="border-[#333]" onClick={handleExport}><Download className="w-4 h-4 mr-1" />导出 Excel</Button>
       </div>
 
       <div className="space-y-2">
-        {requests.map(req => {
+        {filteredRequests.map(req => {
           const isExpanded = expandedId === req.id;
           const store = stores.find(s => s.id === req.storeId);
           const totalRequestQty = req.items.length;
@@ -660,9 +690,11 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
             </Card>
           );
         })}
-        {requests.length === 0 && (
+        {filteredRequests.length === 0 && (
           <Card className="bg-[#121212] border-[#333]">
-            <CardContent className="py-8 text-center text-muted-foreground">暂无商家要货申请</CardContent>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              {statusFilter === "all" ? "暂无商家要货申请" : `暂无「${reqStatusMap[statusFilter].label}」状态的记录`}
+            </CardContent>
           </Card>
         )}
       </div>
