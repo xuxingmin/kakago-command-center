@@ -98,7 +98,7 @@ function StockOverview() {
             <tr className="border-b border-border/30 text-muted-foreground text-left">
               <th className="py-3 px-3 font-medium">物料名称</th>
               <th className="py-3 px-3 font-medium">库存单位</th>
-              <th className="py-3 px-3 font-medium text-right">当前库存</th>
+              <th className="py-3 px-3 font-medium text-right">当前库存/待配送</th>
               <th className="py-3 px-3 font-medium text-right">加权均价</th>
               <th className="py-3 px-3 font-medium">批次号</th>
               <th className="py-3 px-3 font-medium">生产日期</th>
