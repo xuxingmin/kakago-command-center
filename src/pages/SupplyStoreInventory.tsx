@@ -811,6 +811,21 @@ export default function SupplyStoreInventory() {
   const [materials, setMaterials] = useState(MATERIALS);
   const [requests, setRequests] = useState(initRequests);
 
+  // Count replenish orders (stores needing replenishment)
+  const replenishCount = useMemo(() => {
+    return stores.filter(store =>
+      materialKeys.some(k => {
+        const pct = (store.inventory[k].qty / materials[k].fullCapacity) * 100;
+        return pct <= materials[k].restockPct;
+      })
+    ).length;
+  }, [stores, materials]);
+
+  // Count pending merchant requests
+  const pendingRequestCount = useMemo(() => {
+    return requests.filter(r => r.status === "pending").length;
+  }, [requests]);
+
   return (
     <div className="h-full space-y-4">
       <div className="flex items-center gap-3">
@@ -825,8 +840,22 @@ export default function SupplyStoreInventory() {
         <TabsList className="bg-[#121212] border border-[#333]">
           <TabsTrigger value="dashboard"><BarChart3 className="w-4 h-4 mr-1.5" />监控看板</TabsTrigger>
           <TabsTrigger value="strategy"><Settings2 className="w-4 h-4 mr-1.5" />策略配置</TabsTrigger>
-          <TabsTrigger value="replenish"><Truck className="w-4 h-4 mr-1.5" />智能推配</TabsTrigger>
-          <TabsTrigger value="requests"><ShoppingCart className="w-4 h-4 mr-1.5" />商家要货</TabsTrigger>
+          <TabsTrigger value="replenish" className="relative">
+            <Truck className="w-4 h-4 mr-1.5" />智能推配
+            {replenishCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                {replenishCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="relative">
+            <ShoppingCart className="w-4 h-4 mr-1.5" />商家要货
+            {pendingRequestCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                {pendingRequestCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="audit"><ClipboardCheck className="w-4 h-4 mr-1.5" />盘点审计</TabsTrigger>
         </TabsList>
 
