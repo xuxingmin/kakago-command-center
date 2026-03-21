@@ -32,6 +32,29 @@ function StockOverview() {
     },
   });
 
+  const { data: pendingOutbound = [] } = useQuery({
+    queryKey: ["hq-pending-outbound"],
+    queryFn: async () => {
+      const { data: outbounds, error: obErr } = await supabase
+        .from("hq_outbound")
+        .select("id")
+        .in("status", ["pending", "shipped"]);
+      if (obErr) throw obErr;
+      if (!outbounds || outbounds.length === 0) return [];
+      const { data: items, error: itemErr } = await supabase
+        .from("hq_outbound_items")
+        .select("material_id, quantity")
+        .in("outbound_id", outbounds.map((o: any) => o.id));
+      if (itemErr) throw itemErr;
+      return items || [];
+    },
+  });
+
+  const pendingByMaterial: Record<string, number> = {};
+  pendingOutbound.forEach((item: any) => {
+    pendingByMaterial[item.material_id] = (pendingByMaterial[item.material_id] || 0) + Number(item.quantity);
+  });
+
   const adjustMutation = useMutation({
     mutationFn: async ({ id, materialId, currentQty, newQty, reason }: any) => {
       const { error: logErr } = await supabase.from("hq_inventory_logs").insert({
@@ -75,7 +98,7 @@ function StockOverview() {
             <tr className="border-b border-border/30 text-muted-foreground text-left">
               <th className="py-3 px-3 font-medium">物料名称</th>
               <th className="py-3 px-3 font-medium">库存单位</th>
-              <th className="py-3 px-3 font-medium text-right">当前库存</th>
+              <th className="py-3 px-3 font-medium text-right">当前库存/待配送</th>
               <th className="py-3 px-3 font-medium text-right">加权均价</th>
               <th className="py-3 px-3 font-medium">批次号</th>
               <th className="py-3 px-3 font-medium">生产日期</th>
@@ -96,7 +119,12 @@ function StockOverview() {
                   <tr key={item.id} className="border-b border-border/10 hover:bg-muted/5 transition-colors">
                     <td className="py-3 px-3 font-medium text-foreground">{item.sku_materials?.name || "-"}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.sku_materials?.unit_usage || "-"}</td>
-                    <td className="py-3 px-3 text-right font-mono text-foreground">{Number(item.current_qty).toLocaleString()}</td>
+                    <td className="py-3 px-3 text-right font-mono text-foreground">
+                      {Number(item.current_qty).toLocaleString()}
+                      {(pendingByMaterial[item.material_id] || 0) > 0 && (
+                        <span className="text-amber-400">/{Number(pendingByMaterial[item.material_id]).toLocaleString()}</span>
+                      )}
+                    </td>
                     <td className="py-3 px-3 text-right font-mono text-foreground">¥{Number(item.weighted_avg_price).toFixed(2)}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.batch_no || "-"}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.batch_production_date || "-"}</td>
