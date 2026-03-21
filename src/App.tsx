@@ -123,6 +123,14 @@ const App = () => (
             }
           />
           <Route
+            path="/supply/store-inventory"
+            element={
+              <CommandLayout>
+                <SupplyStoreInventory />
+              </CommandLayout>
+            }
+          />
+          <Route
             path="/marketing"
             element={
               <CommandLayout>

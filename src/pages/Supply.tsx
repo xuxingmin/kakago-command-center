@@ -22,6 +22,12 @@ const supplyModules = [
     path: "/supply/hq-warehouse",
   },
   {
+    title: "门店库存管理",
+    description: "门店库存监控、策略配置、智能推配与盘点审计",
+    icon: Store,
+    path: "/supply/store-inventory",
+  },
+  {
     title: "全城产能监控",
     description: "实时查看各门店剩余产能",
     icon: BarChart3,
