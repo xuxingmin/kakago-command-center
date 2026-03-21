@@ -153,6 +153,284 @@ export type Database = {
           },
         ]
       }
+      hq_direct_supply: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_qty: number | null
+          created_at: string
+          id: string
+          instruction_date: string
+          material_id: string
+          notes: string | null
+          order_qty: number
+          status: string
+          store_id: string
+          supplier: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_qty?: number | null
+          created_at?: string
+          id?: string
+          instruction_date?: string
+          material_id: string
+          notes?: string | null
+          order_qty?: number
+          status?: string
+          store_id: string
+          supplier?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_qty?: number | null
+          created_at?: string
+          id?: string
+          instruction_date?: string
+          material_id?: string
+          notes?: string | null
+          order_qty?: number
+          status?: string
+          store_id?: string
+          supplier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_direct_supply_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hq_direct_supply_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hq_inbound: {
+        Row: {
+          batch_no: string | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          material_id: string
+          notes: string | null
+          production_date: string | null
+          purchase_qty: number
+          supplier: string
+          total_cost: number | null
+          unit_price: number
+        }
+        Insert: {
+          batch_no?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          material_id: string
+          notes?: string | null
+          production_date?: string | null
+          purchase_qty?: number
+          supplier?: string
+          total_cost?: number | null
+          unit_price?: number
+        }
+        Update: {
+          batch_no?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          material_id?: string
+          notes?: string | null
+          production_date?: string | null
+          purchase_qty?: number
+          supplier?: string
+          total_cost?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_inbound_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hq_inventory: {
+        Row: {
+          batch_expiry_date: string | null
+          batch_no: string | null
+          batch_production_date: string | null
+          created_at: string
+          current_qty: number
+          id: string
+          material_id: string
+          updated_at: string
+          weighted_avg_price: number
+        }
+        Insert: {
+          batch_expiry_date?: string | null
+          batch_no?: string | null
+          batch_production_date?: string | null
+          created_at?: string
+          current_qty?: number
+          id?: string
+          material_id: string
+          updated_at?: string
+          weighted_avg_price?: number
+        }
+        Update: {
+          batch_expiry_date?: string | null
+          batch_no?: string | null
+          batch_production_date?: string | null
+          created_at?: string
+          current_qty?: number
+          id?: string
+          material_id?: string
+          updated_at?: string
+          weighted_avg_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_inventory_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hq_inventory_logs: {
+        Row: {
+          created_at: string
+          diff: number
+          id: string
+          material_id: string
+          new_qty: number
+          previous_qty: number
+          reason: string | null
+          ref_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          diff?: number
+          id?: string
+          material_id: string
+          new_qty?: number
+          previous_qty?: number
+          reason?: string | null
+          ref_id?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          diff?: number
+          id?: string
+          material_id?: string
+          new_qty?: number
+          previous_qty?: number
+          reason?: string | null
+          ref_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_inventory_logs_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hq_outbound: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          logistics_no: string | null
+          notes: string | null
+          shipped_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          logistics_no?: string | null
+          notes?: string | null
+          shipped_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          logistics_no?: string | null
+          notes?: string | null
+          shipped_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_outbound_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hq_outbound_items: {
+        Row: {
+          created_at: string
+          id: string
+          material_id: string
+          outbound_id: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_id: string
+          outbound_id: string
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_id?: string
+          outbound_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hq_outbound_items_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "sku_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hq_outbound_items_outbound_id_fkey"
+            columns: ["outbound_id"]
+            isOneToOne: false
+            referencedRelation: "hq_outbound"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_logs: {
         Row: {
           created_at: string
