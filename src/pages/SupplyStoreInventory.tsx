@@ -23,7 +23,7 @@ interface MaterialDef {
 }
 interface StoreInventory { qty: number; theoretical: number; }
 interface StoreDef { id: string; name: string; region: string; inventory: Record<MaterialKey, StoreInventory>; }
-type MerchantRequestStatus = "pending" | "approved" | "pending_shipment" | "in_transit" | "completed" | "rejected";
+type MerchantRequestStatus = "pending" | "pending_shipment" | "in_transit" | "completed" | "rejected";
 interface MerchantRequestItem { materialKey: MaterialKey; requestQty: number; approvedQty: number; }
 interface MerchantRequest {
   id: string; storeId: string; storeName: string; items: MerchantRequestItem[];
