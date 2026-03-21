@@ -569,9 +569,9 @@ function DirectLedger() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
             ) : records.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
             ) : (
               records.map((r: any) => (
                 <tr key={r.id} className="border-b border-border/10 hover:bg-muted/5">
