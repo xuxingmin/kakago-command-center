@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Warehouse, PackagePlus, Truck, FileText, AlertTriangle, Search, Plus } from "lucide-react";
+import { ArrowLeft, Warehouse, PackagePlus, Truck, FileText, AlertTriangle, Search, Plus, Printer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
