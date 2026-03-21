@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { ArrowLeft, Store, BarChart3, Settings2, Truck, ShoppingCart, ClipboardCheck, ChevronRight, AlertTriangle, CheckCircle, Download, Search, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { ArrowLeft, Store, BarChart3, Settings2, Truck, ShoppingCart, ClipboardCheck, ChevronRight, AlertTriangle, CheckCircle, Download, Search, ChevronDown, ChevronUp, Package, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ interface MaterialDef {
 }
 interface StoreInventory { qty: number; theoretical: number; }
 interface StoreDef { id: string; name: string; region: string; inventory: Record<MaterialKey, StoreInventory>; }
-type MerchantRequestStatus = "pending" | "approved" | "pending_shipment" | "in_transit" | "completed" | "rejected";
+type MerchantRequestStatus = "pending" | "pending_shipment" | "in_transit" | "completed" | "rejected";
 interface MerchantRequestItem { materialKey: MaterialKey; requestQty: number; approvedQty: number; }
 interface MerchantRequest {
   id: string; storeId: string; storeName: string; items: MerchantRequestItem[];
@@ -59,7 +59,7 @@ const initStores = (): StoreDef[] => [
 // ── Mock Merchant Requests (10 multi-material orders) ──
 const initRequests = (): MerchantRequest[] => [
   { id: "MR001", storeId: "S001", storeName: "天鹅湖万达店", items: [{ materialKey: "coffee_bean", requestQty: 5000, approvedQty: 5000 }, { materialKey: "paper_cup", requestQty: 1000, approvedQty: 1000 }, { materialKey: "straw", requestQty: 50, approvedQty: 50 }], reason: "节假日活动预备", createdAt: "2026-03-15 14:30", status: "pending" },
-  { id: "MR002", storeId: "S003", storeName: "步行街旗舰店", items: [{ materialKey: "paper_cup", requestQty: 1500, approvedQty: 1500 }, { materialKey: "fresh_milk", requestQty: 10000, approvedQty: 10000 }], reason: "日常消耗快", createdAt: "2026-03-16 09:00", status: "approved" },
+  { id: "MR002", storeId: "S003", storeName: "步行街旗舰店", items: [{ materialKey: "paper_cup", requestQty: 1500, approvedQty: 1500 }, { materialKey: "fresh_milk", requestQty: 10000, approvedQty: 10000 }], reason: "日常消耗快", createdAt: "2026-03-16 09:00", status: "pending_shipment", logisticsNo: "YH-S003-002" },
   { id: "MR003", storeId: "S006", storeName: "合肥南站店", items: [{ materialKey: "fresh_milk", requestQty: 15000, approvedQty: 10000 }, { materialKey: "coffee_bean", requestQty: 3000, approvedQty: 3000 }, { materialKey: "syrup", requestQty: 12, approvedQty: 12 }], reason: "周末客流增加", createdAt: "2026-03-17 10:00", status: "pending_shipment", logisticsNo: "YH-S006-001" },
   { id: "MR004", storeId: "S002", storeName: "1912 街区店", items: [{ materialKey: "fresh_milk", requestQty: 20000, approvedQty: 15000 }, { materialKey: "straw", requestQty: 100, approvedQty: 100 }], reason: "促销活动备货", createdAt: "2026-03-17 14:00", status: "in_transit", logisticsNo: "YH-S002-003" },
   { id: "MR005", storeId: "S008", storeName: "政务区华润店", items: [{ materialKey: "syrup", requestQty: 24, approvedQty: 24 }, { materialKey: "coffee_bean", requestQty: 4000, approvedQty: 4000 }, { materialKey: "paper_cup", requestQty: 500, approvedQty: 500 }], reason: "糖浆紧急补充", createdAt: "2026-03-18 08:30", status: "completed", logisticsNo: "YH-S008-002" },
@@ -106,7 +106,6 @@ const statusBg = { green: "bg-green-500/20 text-green-400 border-green-500/30", 
 
 const reqStatusMap: Record<MerchantRequestStatus, { label: string; cls: string }> = {
   pending: { label: "待审批", cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  approved: { label: "已批准", cls: "bg-green-500/20 text-green-400 border-green-500/30" },
   pending_shipment: { label: "待发货", cls: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
   in_transit: { label: "待配送", cls: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   completed: { label: "已完成", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
@@ -515,6 +514,7 @@ function SmartReplenishTab({ stores, materials }: { stores: StoreDef[]; material
 function MerchantRequestsTab({ requests, setRequests, stores, materials }: { requests: MerchantRequest[]; setRequests: (r: MerchantRequest[]) => void; stores: StoreDef[]; materials: Record<MaterialKey, MaterialDef> }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingApproval, setEditingApproval] = useState<Record<string, Record<string, number>>>({});
+  const [statusFilter, setStatusFilter] = useState<MerchantRequestStatus | "all">("all");
 
   const getApprovedQty = (reqId: string, mk: string, defaultQty: number) => editingApproval[reqId]?.[mk] ?? defaultQty;
 
@@ -558,20 +558,49 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
     toast({ title: "已导出 Excel" });
   };
 
+  // Sort by time descending
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [requests]);
+
+  // Filter by status
+  const filteredRequests = useMemo(() => {
+    if (statusFilter === "all") return sortedRequests;
+    return sortedRequests.filter(r => r.status === statusFilter);
+  }, [sortedRequests, statusFilter]);
+
+  // Status counts for filter badges
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: requests.length };
+    for (const st of Object.keys(reqStatusMap)) {
+      counts[st] = requests.filter(r => r.status === st).length;
+    }
+    return counts;
+  }, [requests]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="flex gap-2 text-xs">
-          {(Object.keys(reqStatusMap) as MerchantRequestStatus[]).map(st => {
-            const count = requests.filter(r => r.status === st).length;
-            return count > 0 ? <Badge key={st} variant="outline" className={reqStatusMap[st].cls}>{reqStatusMap[st].label} {count}</Badge> : null;
-          })}
+        <div className="flex gap-2 text-xs flex-wrap">
+          <Badge
+            variant="outline"
+            className={`cursor-pointer transition-all ${statusFilter === "all" ? "bg-foreground/20 text-foreground border-foreground/30" : "border-[#333] text-muted-foreground hover:text-foreground"}`}
+            onClick={() => setStatusFilter("all")}
+          >全部 {statusCounts.all}</Badge>
+          {(Object.keys(reqStatusMap) as MerchantRequestStatus[]).map(st => (
+            <Badge
+              key={st}
+              variant="outline"
+              className={`cursor-pointer transition-all ${statusFilter === st ? reqStatusMap[st].cls : "border-[#333] text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setStatusFilter(statusFilter === st ? "all" : st)}
+            >{reqStatusMap[st].label} {statusCounts[st] || 0}</Badge>
+          ))}
         </div>
         <Button variant="outline" size="sm" className="border-[#333]" onClick={handleExport}><Download className="w-4 h-4 mr-1" />导出 Excel</Button>
       </div>
 
       <div className="space-y-2">
-        {requests.map(req => {
+        {filteredRequests.map(req => {
           const isExpanded = expandedId === req.id;
           const store = stores.find(s => s.id === req.storeId);
           const totalRequestQty = req.items.length;
@@ -661,9 +690,11 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
             </Card>
           );
         })}
-        {requests.length === 0 && (
+        {filteredRequests.length === 0 && (
           <Card className="bg-[#121212] border-[#333]">
-            <CardContent className="py-8 text-center text-muted-foreground">暂无商家要货申请</CardContent>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              {statusFilter === "all" ? "暂无商家要货申请" : `暂无「${reqStatusMap[statusFilter].label}」状态的记录`}
+            </CardContent>
           </Card>
         )}
       </div>
@@ -780,6 +811,21 @@ export default function SupplyStoreInventory() {
   const [materials, setMaterials] = useState(MATERIALS);
   const [requests, setRequests] = useState(initRequests);
 
+  // Count replenish orders (stores needing replenishment)
+  const replenishCount = useMemo(() => {
+    return stores.filter(store =>
+      materialKeys.some(k => {
+        const pct = (store.inventory[k].qty / materials[k].fullCapacity) * 100;
+        return pct <= materials[k].restockPct;
+      })
+    ).length;
+  }, [stores, materials]);
+
+  // Count pending merchant requests
+  const pendingRequestCount = useMemo(() => {
+    return requests.filter(r => r.status === "pending").length;
+  }, [requests]);
+
   return (
     <div className="h-full space-y-4">
       <div className="flex items-center gap-3">
@@ -794,8 +840,22 @@ export default function SupplyStoreInventory() {
         <TabsList className="bg-[#121212] border border-[#333]">
           <TabsTrigger value="dashboard"><BarChart3 className="w-4 h-4 mr-1.5" />监控看板</TabsTrigger>
           <TabsTrigger value="strategy"><Settings2 className="w-4 h-4 mr-1.5" />策略配置</TabsTrigger>
-          <TabsTrigger value="replenish"><Truck className="w-4 h-4 mr-1.5" />智能推配</TabsTrigger>
-          <TabsTrigger value="requests"><ShoppingCart className="w-4 h-4 mr-1.5" />商家要货</TabsTrigger>
+          <TabsTrigger value="replenish" className="relative">
+            <Truck className="w-4 h-4 mr-1.5" />智能推配
+            {replenishCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                {replenishCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="relative">
+            <ShoppingCart className="w-4 h-4 mr-1.5" />商家要货
+            {pendingRequestCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                {pendingRequestCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="audit"><ClipboardCheck className="w-4 h-4 mr-1.5" />盘点审计</TabsTrigger>
         </TabsList>
 
