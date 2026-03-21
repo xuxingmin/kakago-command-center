@@ -552,21 +552,8 @@ function DirectLedger() {
     },
   });
 
-  // Compute discrepancies
-  const discrepancies = records.filter((r: any) => r.confirmed_qty !== null && Number(r.confirmed_qty) !== Number(r.order_qty));
-
   return (
     <div className="space-y-4">
-      {discrepancies.length > 0 && (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="p-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-destructive" />
-            <span className="text-sm text-destructive font-medium">
-              存在 {discrepancies.length} 条指令/确认数量差异，请核实对账
-            </span>
-          </CardContent>
-        </Card>
-      )}
       <div className="overflow-x-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -577,42 +564,30 @@ function DirectLedger() {
               <th className="py-3 px-3 font-medium">物料</th>
               <th className="py-3 px-3 font-medium text-right">指令数量</th>
               <th className="py-3 px-3 font-medium text-right">确认数量</th>
-              <th className="py-3 px-3 font-medium text-center">差异</th>
               <th className="py-3 px-3 font-medium">状态</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={8} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
+              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
             ) : records.length === 0 ? (
-              <tr><td colSpan={8} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
+              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
             ) : (
-              records.map((r: any) => {
-                const diff = r.confirmed_qty !== null ? Number(r.confirmed_qty) - Number(r.order_qty) : null;
-                const hasDiff = diff !== null && diff !== 0;
-                return (
-                  <tr key={r.id} className="border-b border-border/10 hover:bg-muted/5">
-                    <td className="py-3 px-3 text-muted-foreground text-xs">{r.instruction_date}</td>
-                    <td className="py-3 px-3 text-foreground">{r.supplier}</td>
-                    <td className="py-3 px-3 text-foreground">{r.stores?.name || "-"}</td>
-                    <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
-                    <td className="py-3 px-3 text-right font-mono">{r.order_qty} {r.sku_materials?.unit_purchase}</td>
-                    <td className="py-3 px-3 text-right font-mono">{r.confirmed_qty ?? "—"}</td>
-                    <td className="py-3 px-3 text-center">
-                      {hasDiff ? (
-                        <span className="text-destructive font-bold">{diff! > 0 ? `+${diff}` : diff}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <Badge variant={r.status === "confirmed" ? "secondary" : r.status === "ordered" ? "outline" : "default"}>
-                        {r.status === "ordered" ? "已下达" : r.status === "confirmed" ? "已确认" : r.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                );
-              })
+              records.map((r: any) => (
+                <tr key={r.id} className="border-b border-border/10 hover:bg-muted/5">
+                  <td className="py-3 px-3 text-muted-foreground text-xs">{r.instruction_date}</td>
+                  <td className="py-3 px-3 text-foreground">{r.supplier}</td>
+                  <td className="py-3 px-3 text-foreground">{r.stores?.name || "-"}</td>
+                  <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
+                  <td className="py-3 px-3 text-right font-mono">{r.order_qty} {r.sku_materials?.unit_purchase}</td>
+                  <td className="py-3 px-3 text-right font-mono">{r.confirmed_qty ?? "—"}</td>
+                  <td className="py-3 px-3">
+                    <Badge variant={r.status === "confirmed" ? "secondary" : r.status === "ordered" ? "outline" : "default"}>
+                      {r.status === "ordered" ? "已下达" : r.status === "confirmed" ? "已确认" : r.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
