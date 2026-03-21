@@ -115,6 +115,14 @@ const App = () => (
             }
           />
           <Route
+            path="/supply/hq-warehouse"
+            element={
+              <CommandLayout>
+                <SupplyHQWarehouse />
+              </CommandLayout>
+            }
+          />
+          <Route
             path="/marketing"
             element={
               <CommandLayout>
