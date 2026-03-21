@@ -580,7 +580,7 @@ function DirectLedger() {
                   <td className="py-3 px-3 text-foreground">{r.stores?.name || "-"}</td>
                   <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
                   <td className="py-3 px-3 text-right font-mono">{r.order_qty} {r.sku_materials?.unit_purchase}</td>
-                  <td className="py-3 px-3 text-right font-mono">{r.confirmed_qty ?? "—"}</td>
+                  
                   <td className="py-3 px-3">
                     <Badge variant={r.status === "confirmed" ? "secondary" : r.status === "ordered" ? "outline" : "default"}>
                       {r.status === "ordered" ? "已下达" : r.status === "confirmed" ? "已确认" : r.status}
