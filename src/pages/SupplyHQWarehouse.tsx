@@ -32,6 +32,29 @@ function StockOverview() {
     },
   });
 
+  const { data: pendingOutbound = [] } = useQuery({
+    queryKey: ["hq-pending-outbound"],
+    queryFn: async () => {
+      const { data: outbounds, error: obErr } = await supabase
+        .from("hq_outbound")
+        .select("id")
+        .in("status", ["pending", "shipped"]);
+      if (obErr) throw obErr;
+      if (!outbounds || outbounds.length === 0) return [];
+      const { data: items, error: itemErr } = await supabase
+        .from("hq_outbound_items")
+        .select("material_id, quantity")
+        .in("outbound_id", outbounds.map((o: any) => o.id));
+      if (itemErr) throw itemErr;
+      return items || [];
+    },
+  });
+
+  const pendingByMaterial: Record<string, number> = {};
+  pendingOutbound.forEach((item: any) => {
+    pendingByMaterial[item.material_id] = (pendingByMaterial[item.material_id] || 0) + Number(item.quantity);
+  });
+
   const adjustMutation = useMutation({
     mutationFn: async ({ id, materialId, currentQty, newQty, reason }: any) => {
       const { error: logErr } = await supabase.from("hq_inventory_logs").insert({
