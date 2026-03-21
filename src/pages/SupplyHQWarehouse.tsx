@@ -563,15 +563,15 @@ function DirectLedger() {
               <th className="py-3 px-3 font-medium">门店</th>
               <th className="py-3 px-3 font-medium">物料</th>
               <th className="py-3 px-3 font-medium text-right">指令数量</th>
-              <th className="py-3 px-3 font-medium text-right">确认数量</th>
+              
               <th className="py-3 px-3 font-medium">状态</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">加载中...</td></tr>
             ) : records.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">暂无直供流水</td></tr>
             ) : (
               records.map((r: any) => (
                 <tr key={r.id} className="border-b border-border/10 hover:bg-muted/5">
@@ -580,7 +580,7 @@ function DirectLedger() {
                   <td className="py-3 px-3 text-foreground">{r.stores?.name || "-"}</td>
                   <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
                   <td className="py-3 px-3 text-right font-mono">{r.order_qty} {r.sku_materials?.unit_purchase}</td>
-                  <td className="py-3 px-3 text-right font-mono">{r.confirmed_qty ?? "—"}</td>
+                  
                   <td className="py-3 px-3">
                     <Badge variant={r.status === "confirmed" ? "secondary" : r.status === "ordered" ? "outline" : "default"}>
                       {r.status === "ordered" ? "已下达" : r.status === "confirmed" ? "已确认" : r.status}
