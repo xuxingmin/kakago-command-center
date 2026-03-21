@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Box, FileText, BarChart3, ClipboardList, Truck, Package, ShoppingCart } from "lucide-react";
+import { Box, FileText, BarChart3, ClipboardList, Truck, Package, ShoppingCart, Warehouse } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const supplyModules = [
