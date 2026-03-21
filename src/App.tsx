@@ -15,6 +15,7 @@ import SupplyDashboard from "./pages/SupplyDashboard";
 import SupplyRequest from "./pages/SupplyRequest";
 import SupplyPush from "./pages/SupplyPush";
 import SupplyAdjust from "./pages/SupplyAdjust";
+import SupplyHQWarehouse from "./pages/SupplyHQWarehouse";
 
 
 import Marketing from "./pages/Marketing";

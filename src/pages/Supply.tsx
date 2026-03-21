@@ -16,6 +16,12 @@ const supplyModules = [
     path: "/supply/bom",
   },
   {
+    title: "总部库存管理",
+    description: "总部实仓看板、采购入库、出库执行与直供流水",
+    icon: Warehouse,
+    path: "/supply/hq-warehouse",
+  },
+  {
     title: "全城产能监控",
     description: "实时查看各门店剩余产能",
     icon: BarChart3,
