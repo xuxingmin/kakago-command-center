@@ -106,7 +106,6 @@ const statusBg = { green: "bg-green-500/20 text-green-400 border-green-500/30", 
 
 const reqStatusMap: Record<MerchantRequestStatus, { label: string; cls: string }> = {
   pending: { label: "待审批", cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  approved: { label: "已批准", cls: "bg-green-500/20 text-green-400 border-green-500/30" },
   pending_shipment: { label: "待发货", cls: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
   in_transit: { label: "待配送", cls: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   completed: { label: "已完成", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
