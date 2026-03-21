@@ -645,7 +645,7 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
                                 <Input
                                   type="number" value={editVal} className="w-24 ml-auto bg-[#0a0a0a] border-[#333] text-right font-mono"
                                   onClick={e => e.stopPropagation()}
-                                  onChange={e => setEditingApproval(prev => ({ ...prev, [req.id]: { ...(prev[req.id] || {}), [item.materialKey]: Math.max(0, Number(e.target.value)) } }))}
+                                  onChange={e => { const v = Math.max(0, Number(e.target.value)); setEditingApproval(prev => { const existing = prev[req.id] || {} as Record<string, number>; return { ...prev, [req.id]: { ...existing, [item.materialKey]: v } as Record<string, number> }; }); }}
                                 />
                               ) : (
                                 <span className="font-mono text-foreground">{item.approvedQty.toLocaleString()} {m.unit}</span>
