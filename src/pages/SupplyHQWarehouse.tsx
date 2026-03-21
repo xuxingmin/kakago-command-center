@@ -395,42 +395,66 @@ function OutboundExecution() {
 
   const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
     pending: { label: "待发货", variant: "destructive" },
-    shipped: { label: "配送中", variant: "default" },
+    shipped: { label: "待配送", variant: "default" },
     received: { label: "已签收", variant: "secondary" },
   };
 
+  const statusGroups = [
+    { key: "pending", title: "待发货", icon: "📦" },
+    { key: "shipped", title: "待配送", icon: "🚚" },
+    { key: "received", title: "已签收", icon: "✅" },
+  ];
+
+  const grouped = statusGroups.map((g) => ({
+    ...g,
+    items: outbounds.filter((ob: any) => ob.status === g.key),
+  }));
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {isLoading ? (
         <p className="text-center text-muted-foreground py-12">加载中...</p>
       ) : outbounds.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">暂无出库单据</p>
       ) : (
-        outbounds.map((ob: any) => (
-          <Card key={ob.id} className="bg-card border-border/30">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-foreground font-medium">{ob.stores?.name || "未知门店"}</span>
-                  <Badge variant={statusMap[ob.status]?.variant || "outline"}>{statusMap[ob.status]?.label || ob.status}</Badge>
-                  {ob.logistics_no && <span className="text-xs text-muted-foreground font-mono">物流: {ob.logistics_no}</span>}
-                </div>
-                <span className="text-xs text-muted-foreground">{new Date(ob.created_at).toLocaleString("zh-CN")}</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {ob.hq_outbound_items?.map((item: any) => (
-                  <span key={item.id} className="text-xs bg-muted/20 px-2 py-1 rounded text-muted-foreground">
-                    {item.sku_materials?.name} × {item.quantity} {item.sku_materials?.unit_usage}
-                  </span>
-                ))}
-              </div>
-              {ob.status === "pending" && (
-                <Button size="sm" variant="default" onClick={() => shipMutation.mutate(ob)} disabled={shipMutation.isPending}>
-                  <Truck className="w-4 h-4 mr-1" />确认发货
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+        grouped.map((group) => (
+          <div key={group.key} className="space-y-3">
+            <div className="flex items-center gap-2 border-b border-border/20 pb-2">
+              <span>{group.icon}</span>
+              <h3 className="text-sm font-semibold text-foreground">{group.title}</h3>
+              <Badge variant="outline" className="text-xs">{group.items.length}</Badge>
+            </div>
+            {group.items.length === 0 ? (
+              <p className="text-xs text-muted-foreground pl-6 py-2">暂无{group.title}单据</p>
+            ) : (
+              group.items.map((ob: any) => (
+                <Card key={ob.id} className="bg-card border-border/30">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-foreground font-medium">{ob.stores?.name || "未知门店"}</span>
+                        <Badge variant={statusMap[ob.status]?.variant || "outline"}>{statusMap[ob.status]?.label || ob.status}</Badge>
+                        {ob.logistics_no && <span className="text-xs text-muted-foreground font-mono">物流: {ob.logistics_no}</span>}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{new Date(ob.created_at).toLocaleString("zh-CN")}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {ob.hq_outbound_items?.map((item: any) => (
+                        <span key={item.id} className="text-xs bg-muted/20 px-2 py-1 rounded text-muted-foreground">
+                          {item.sku_materials?.name} × {item.quantity} {item.sku_materials?.unit_usage}
+                        </span>
+                      ))}
+                    </div>
+                    {ob.status === "pending" && (
+                      <Button size="sm" variant="default" onClick={() => shipMutation.mutate(ob)} disabled={shipMutation.isPending}>
+                        <Truck className="w-4 h-4 mr-1" />确认发货
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         ))
       )}
     </div>
