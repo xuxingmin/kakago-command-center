@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { ArrowLeft, Store, BarChart3, Settings2, Truck, ShoppingCart, ClipboardCheck, ChevronRight, AlertTriangle, CheckCircle, Download, Search, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { ArrowLeft, Store, BarChart3, Settings2, Truck, ShoppingCart, ClipboardCheck, ChevronRight, AlertTriangle, CheckCircle, Download, Search, ChevronDown, ChevronUp, Package, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
