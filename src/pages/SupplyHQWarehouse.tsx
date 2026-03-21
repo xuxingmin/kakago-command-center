@@ -563,7 +563,7 @@ function DirectLedger() {
               <th className="py-3 px-3 font-medium">门店</th>
               <th className="py-3 px-3 font-medium">物料</th>
               <th className="py-3 px-3 font-medium text-right">指令数量</th>
-              <th className="py-3 px-3 font-medium text-right">确认数量</th>
+              
               <th className="py-3 px-3 font-medium">状态</th>
             </tr>
           </thead>
