@@ -355,43 +355,111 @@ function InboundManagement() {
 // ── Outbound Execution Tab ──
 function OutboundExecution() {
   const queryClient = useQueryClient();
+  const [printData, setPrintData] = useState<any>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const { data: outbounds = [], isLoading } = useQuery({
     queryKey: ["hq-outbound"],
     queryFn: async () => {
       const { data } = await supabase
         .from("hq_outbound")
-        .select("*, stores(name), hq_outbound_items(*, sku_materials(name, unit_usage))")
+        .select("*, stores(id, name), hq_outbound_items(*, sku_materials(name, unit_usage))")
         .order("created_at", { ascending: false });
       return data || [];
     },
   });
 
+  // Generate delivery number: store short id + sequential count
+  const generateDeliveryNo = async (storeId: string) => {
+    const shortId = storeId.substring(0, 6).toUpperCase();
+    // Count existing outbounds for this store (excluding current pending)
+    const { count } = await supabase
+      .from("hq_outbound")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", storeId)
+      .neq("status", "pending");
+    const seq = (count || 0) + 1;
+    return `PS${shortId}-${String(seq).padStart(4, "0")}`;
+  };
+
   const shipMutation = useMutation({
     mutationFn: async (outbound: any) => {
-      const logisticsNo = `WL${Date.now().toString(36).toUpperCase()}`;
-      // Deduct HQ inventory for each item
-      for (const item of outbound.hq_outbound_items) {
-        const { data: inv } = await supabase.from("hq_inventory").select("*").eq("material_id", item.material_id).maybeSingle();
-        if (!inv) throw new Error(`物料库存不存在: ${item.sku_materials?.name}`);
-        const newQty = Number(inv.current_qty) - Number(item.quantity);
-        if (newQty < 0) throw new Error(`库存不足: ${item.sku_materials?.name}`);
-        await supabase.from("hq_inventory").update({ current_qty: newQty }).eq("id", inv.id);
-        await supabase.from("hq_inventory_logs").insert({
-          material_id: item.material_id, type: "outbound", ref_id: outbound.id,
-          previous_qty: inv.current_qty, new_qty: newQty, diff: -Number(item.quantity),
-          reason: `出库至 ${outbound.stores?.name}`,
-        });
-      }
-      await supabase.from("hq_outbound").update({ status: "shipped", logistics_no: logisticsNo, shipped_at: new Date().toISOString() }).eq("id", outbound.id);
+      const deliveryNo = await generateDeliveryNo(outbound.store_id || outbound.stores?.id);
+      // Do NOT deduct HQ inventory here — only move status to "shipped" (待配送)
+      // Pending delivery qty is already tracked via hq_outbound_items with pending/shipped status
+      await supabase.from("hq_outbound").update({
+        status: "shipped",
+        logistics_no: deliveryNo,
+        shipped_at: new Date().toISOString(),
+      }).eq("id", outbound.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hq-outbound"] });
-      queryClient.invalidateQueries({ queryKey: ["hq-inventory"] });
-      toast({ title: "发货成功", description: "HQ库存已扣减，物流单号已生成" });
+      queryClient.invalidateQueries({ queryKey: ["hq-pending-outbound"] });
+      toast({ title: "已确认发货", description: "配送单号已生成，单据已移至待配送" });
     },
     onError: (e: any) => toast({ title: "发货失败", description: e.message, variant: "destructive" }),
   });
+
+  const handlePrint = (ob: any) => {
+    setPrintData(ob);
+    setTimeout(() => {
+      if (printRef.current) {
+        const printWindow = window.open("", "_blank", "width=600,height=800");
+        if (printWindow) {
+          printWindow.document.write(`
+            <html><head><title>配送单 - ${ob.logistics_no}</title>
+            <style>
+              body { font-family: -apple-system, sans-serif; padding: 40px; color: #1a1a1a; }
+              h1 { font-size: 22px; text-align: center; margin-bottom: 4px; }
+              .sub { text-align: center; color: #888; font-size: 13px; margin-bottom: 24px; }
+              .info { margin-bottom: 20px; }
+              .info p { margin: 6px 0; font-size: 14px; }
+              .info strong { display: inline-block; width: 80px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+              th, td { border: 1px solid #ddd; padding: 8px 12px; font-size: 13px; text-align: left; }
+              th { background: #f5f5f5; font-weight: 600; }
+              td.qty { text-align: right; font-family: monospace; }
+              .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 13px; color: #666; }
+              .footer div { width: 45%; }
+              .footer .line { border-bottom: 1px solid #999; margin-top: 30px; }
+              @media print { body { padding: 20px; } }
+            </style></head><body>
+            <h1>配送单</h1>
+            <div class="sub">DELIVERY SLIP</div>
+            <div class="info">
+              <p><strong>配送单号</strong>${ob.logistics_no}</p>
+              <p><strong>配送门店</strong>${ob.stores?.name || "未知门店"}</p>
+              <p><strong>发货时间</strong>${ob.shipped_at ? new Date(ob.shipped_at).toLocaleString("zh-CN") : new Date().toLocaleString("zh-CN")}</p>
+              <p><strong>创建时间</strong>${new Date(ob.created_at).toLocaleString("zh-CN")}</p>
+            </div>
+            <table>
+              <thead><tr><th>序号</th><th>物料名称</th><th>数量</th><th>单位</th></tr></thead>
+              <tbody>
+                ${ob.hq_outbound_items?.map((item: any, i: number) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td>${item.sku_materials?.name || "-"}</td>
+                    <td class="qty">${Number(item.quantity).toLocaleString()}</td>
+                    <td>${item.sku_materials?.unit_usage || "-"}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+            ${ob.notes ? `<p style="margin-top:16px;font-size:13px;color:#666;">备注：${ob.notes}</p>` : ""}
+            <div class="footer">
+              <div>发货人签字：<div class="line"></div></div>
+              <div>收货人签字：<div class="line"></div></div>
+            </div>
+            </body></html>
+          `);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      }
+      setPrintData(null);
+    }, 100);
+  };
 
   const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
     pending: { label: "待发货", variant: "destructive" },
@@ -412,6 +480,9 @@ function OutboundExecution() {
 
   return (
     <div className="space-y-6">
+      {/* Hidden print target */}
+      <div ref={printRef} className="hidden" />
+
       {isLoading ? (
         <p className="text-center text-muted-foreground py-12">加载中...</p>
       ) : outbounds.length === 0 ? (
@@ -434,9 +505,16 @@ function OutboundExecution() {
                       <div className="flex items-center gap-3">
                         <span className="text-foreground font-medium">{ob.stores?.name || "未知门店"}</span>
                         <Badge variant={statusMap[ob.status]?.variant || "outline"}>{statusMap[ob.status]?.label || ob.status}</Badge>
-                        {ob.logistics_no && <span className="text-xs text-muted-foreground font-mono">物流: {ob.logistics_no}</span>}
+                        {ob.logistics_no && <span className="text-xs text-muted-foreground font-mono">配送单号: {ob.logistics_no}</span>}
                       </div>
-                      <span className="text-xs text-muted-foreground">{new Date(ob.created_at).toLocaleString("zh-CN")}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground">{new Date(ob.created_at).toLocaleString("zh-CN")}</span>
+                        {ob.status === "shipped" && (
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handlePrint(ob)}>
+                            <Printer className="w-3.5 h-3.5 mr-1" />打印配送单
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {ob.hq_outbound_items?.map((item: any) => (
