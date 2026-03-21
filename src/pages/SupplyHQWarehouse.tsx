@@ -119,7 +119,12 @@ function StockOverview() {
                   <tr key={item.id} className="border-b border-border/10 hover:bg-muted/5 transition-colors">
                     <td className="py-3 px-3 font-medium text-foreground">{item.sku_materials?.name || "-"}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.sku_materials?.unit_usage || "-"}</td>
-                    <td className="py-3 px-3 text-right font-mono text-foreground">{Number(item.current_qty).toLocaleString()}</td>
+                    <td className="py-3 px-3 text-right font-mono text-foreground">
+                      {Number(item.current_qty).toLocaleString()}
+                      {(pendingByMaterial[item.material_id] || 0) > 0 && (
+                        <span className="text-amber-400">/{Number(pendingByMaterial[item.material_id]).toLocaleString()}</span>
+                      )}
+                    </td>
                     <td className="py-3 px-3 text-right font-mono text-foreground">¥{Number(item.weighted_avg_price).toFixed(2)}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.batch_no || "-"}</td>
                     <td className="py-3 px-3 text-muted-foreground">{item.batch_production_date || "-"}</td>
