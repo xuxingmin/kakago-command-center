@@ -910,8 +910,10 @@ export type Database = {
           conversion_rate: number
           cost: number
           created_at: string
+          full_capacity: number
           id: string
           main_category: string
+          min_package_unit: number
           name: string
           sub_category: string
           unit_purchase: string
@@ -923,8 +925,10 @@ export type Database = {
           conversion_rate?: number
           cost?: number
           created_at?: string
+          full_capacity?: number
           id?: string
           main_category?: string
+          min_package_unit?: number
           name: string
           sub_category?: string
           unit_purchase?: string
@@ -936,8 +940,10 @@ export type Database = {
           conversion_rate?: number
           cost?: number
           created_at?: string
+          full_capacity?: number
           id?: string
           main_category?: string
+          min_package_unit?: number
           name?: string
           sub_category?: string
           unit_purchase?: string
