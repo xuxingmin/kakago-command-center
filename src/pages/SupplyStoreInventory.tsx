@@ -389,10 +389,10 @@ function SmartReplenishTab({ stores, materials }: { stores: StoreDef[]; material
   };
 
   const updateItemQty = (storeId: string, mk: MaterialKey, val: number) => {
-    setEditOverrides(prev => ({
-      ...prev,
-      [storeId]: { ...(prev[storeId] || {}), [mk]: val }
-    }));
+    setEditOverrides(prev => {
+      const existing = prev[storeId] || {} as Record<MaterialKey, number>;
+      return { ...prev, [storeId]: { ...existing, [mk]: val } as Record<MaterialKey, number> };
+    });
   };
 
   const getEditQty = (storeId: string, mk: MaterialKey, defaultQty: number) => {
