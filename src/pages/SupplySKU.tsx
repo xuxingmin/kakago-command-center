@@ -244,14 +244,17 @@ export default function SupplySKU() {
           <div className="rounded-lg border border-border bg-card overflow-hidden overflow-x-hidden max-h-[calc(100vh-250px)] overflow-y-auto relative">
             <table className="w-full caption-bottom text-sm table-fixed">
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
-                <tr className="border-border">
+                 <tr className="border-border">
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">一级分类</th>
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">二级分类</th>
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[18%]">物料名称</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[20%]">换算率</th>
-                  <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[12%]">成本</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[18%]">换算率</th>
+                  <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[14%]">
+                    <span title="由入库记录加权计算，不可手动修改">加权平均单价</span>
+                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（消耗单位·只读）</span>
+                  </th>
                   <th className="h-11 px-3 align-middle font-medium text-muted-foreground w-[10%]">操作</th>
                 </tr>
               </thead>
@@ -296,7 +299,7 @@ export default function SupplySKU() {
                             (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-mono">¥{material.cost.toFixed(2)}</td>
+                        <td className="px-3 py-2 text-right font-mono text-muted-foreground" title="由入库加权计算，此处不可编辑">¥{material.cost.toFixed(2)}/{material.unit_usage}</td>
                         <td className="px-3 py-2">
                           <div className="flex gap-1">
                             <MaterialDialog queryClient={queryClient} material={material} />
@@ -408,7 +411,6 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
   const [name, setName] = useState(material?.name || "");
   const [mainCategory, setMainCategory] = useState(material?.main_category || "食材");
   const [subCategory, setSubCategory] = useState(material?.sub_category || "咖啡豆");
-  const [cost, setCost] = useState(material?.cost?.toString() || "0");
   const [unitPurchase, setUnitPurchase] = useState(material?.unit_purchase || "箱");
   const [unitUsage, setUnitUsage] = useState(material?.unit_usage || "g");
   const [conversionRate, setConversionRate] = useState(material?.conversion_rate?.toString() || "1");
@@ -441,7 +443,6 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
         category: mapToLegacyCategory(mainCategory, subCategory) as any,
         main_category: mainCategory,
         sub_category: subCategory,
-        cost: parseFloat(cost) || 0,
         unit_purchase: unitPurchase.trim(),
         unit_usage: unitUsage.trim(),
         conversion_rate: rate,
@@ -461,7 +462,7 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
       setOpen(false);
       if (!isEdit) {
         setName(""); setMainCategory("食材"); setSubCategory("咖啡豆");
-        setCost("0"); setUnitPurchase("箱"); setUnitUsage("g"); setConversionRate("1");
+        setUnitPurchase("箱"); setUnitUsage("g"); setConversionRate("1");
       }
     },
     onError: (err: any) => toast.error(err.message || "操作失败"),
@@ -515,10 +516,7 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
               <Label className="text-xs">物料名称 *</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：厚椰乳" className="bg-background border-border" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">单位成本 (¥)</Label>
-              <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} className="bg-background border-border" />
-            </div>
+            <p className="text-[11px] text-muted-foreground/70 italic">💡 成本由「总部库存 → 采购入库」自动加权计算，此处无需定义</p>
           </div>
 
           {/* Section: 规格换算 */}
