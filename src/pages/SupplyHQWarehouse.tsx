@@ -374,7 +374,7 @@ function InboundManagement() {
                   <td className="py-3 px-3 text-foreground">{r.supplier}</td>
                   <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
                   <td className="py-3 px-3 text-right font-mono">{r.purchase_qty} {r.sku_materials?.unit_purchase}</td>
-                  <td className="py-3 px-3 text-right font-mono">¥{Number(r.unit_price).toFixed(2)}</td>
+                  <td className="py-3 px-3 text-right font-mono">¥{Number(r.unit_price).toFixed(2)}/{r.sku_materials?.unit_purchase}</td>
                   <td className="py-3 px-3 text-right font-mono text-primary">¥{Number(r.total_cost).toFixed(2)}</td>
                   <td className="py-3 px-3 text-muted-foreground text-xs">{r.batch_no || "-"}</td>
                 </tr>
