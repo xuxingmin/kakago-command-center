@@ -314,7 +314,7 @@ export default function SupplySKU() {
                                 <span className="inline-flex items-center gap-1">
                                   ¥{material.cost.toFixed(2)}/{material.unit_usage}
                                   {material.supply_mode === '直供' ? (
-                                    <PenLine className="w-3 h-3 text-amber-500 inline-block" />
+                                    <PenLine className="w-3 h-3 text-warning inline-block" />
                                   ) : (
                                     <RefreshCw className="w-3 h-3 text-primary inline-block" />
                                   )}
