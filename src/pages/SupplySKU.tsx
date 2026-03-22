@@ -462,7 +462,7 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
       setOpen(false);
       if (!isEdit) {
         setName(""); setMainCategory("食材"); setSubCategory("咖啡豆");
-        setCost("0"); setUnitPurchase("箱"); setUnitUsage("g"); setConversionRate("1");
+        setUnitPurchase("箱"); setUnitUsage("g"); setConversionRate("1");
       }
     },
     onError: (err: any) => toast.error(err.message || "操作失败"),
