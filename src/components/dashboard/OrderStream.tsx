@@ -35,6 +35,7 @@ export function OrderStream() {
         created_at,
         stores!inner(name)
       `)
+      .in("status", ["pending", "making"])
       .order("created_at", { ascending: false })
       .limit(30);
 
