@@ -316,8 +316,18 @@ function InboundManagement() {
                   <Input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>进货单价{selectedMaterial ? ` (元/${selectedMaterial.unit_purchase})` : ""}</Label>
-                  <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                  <Label>采购单价{selectedMaterial ? ` (¥/${selectedMaterial.unit_purchase})` : ""}</Label>
+                  <div className="relative">
+                    <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="pr-16" />
+                    {selectedMaterial && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">元/{selectedMaterial.unit_purchase}</span>
+                    )}
+                  </div>
+                  {selectedMaterial && form.price && Number(form.price) > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      折合消耗单价：¥{(Number(form.price) / Number(selectedMaterial.conversion_rate)).toFixed(4)} / {selectedMaterial.unit_usage}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>批次号</Label>
@@ -333,7 +343,13 @@ function InboundManagement() {
                 </div>
               </div>
             </div>
-            <Button onClick={() => inboundMutation.mutate()} disabled={!form.materialId || !form.qty || !form.price || inboundMutation.isPending} className="w-full mt-4">
+            {form.qty && form.price && Number(form.qty) > 0 && Number(form.price) > 0 && (
+              <div className="flex justify-between items-center px-1 text-sm">
+                <span className="text-muted-foreground">采购总额</span>
+                <span className="font-mono font-semibold text-primary">¥{(Number(form.qty) * Number(form.price)).toFixed(2)}</span>
+              </div>
+            )}
+            <Button onClick={() => inboundMutation.mutate()} disabled={!form.materialId || !form.qty || !form.price || inboundMutation.isPending} className="w-full mt-2">
               {inboundMutation.isPending ? "提交中..." : "确认入库"}
             </Button>
           </DialogContent>
@@ -347,7 +363,7 @@ function InboundManagement() {
               <th className="py-3 px-3 font-medium">供应商</th>
               <th className="py-3 px-3 font-medium">物料</th>
               <th className="py-3 px-3 font-medium text-right">数量</th>
-              <th className="py-3 px-3 font-medium text-right">单价</th>
+              <th className="py-3 px-3 font-medium text-right">采购单价 (¥/采购规格)</th>
               <th className="py-3 px-3 font-medium text-right">总额</th>
               <th className="py-3 px-3 font-medium">批次</th>
             </tr>
@@ -364,7 +380,7 @@ function InboundManagement() {
                   <td className="py-3 px-3 text-foreground">{r.supplier}</td>
                   <td className="py-3 px-3 text-foreground">{r.sku_materials?.name}</td>
                   <td className="py-3 px-3 text-right font-mono">{r.purchase_qty} {r.sku_materials?.unit_purchase}</td>
-                  <td className="py-3 px-3 text-right font-mono">¥{Number(r.unit_price).toFixed(2)}</td>
+                  <td className="py-3 px-3 text-right font-mono">¥{Number(r.unit_price).toFixed(2)}/{r.sku_materials?.unit_purchase}</td>
                   <td className="py-3 px-3 text-right font-mono text-primary">¥{Number(r.total_cost).toFixed(2)}</td>
                   <td className="py-3 px-3 text-muted-foreground text-xs">{r.batch_no || "-"}</td>
                 </tr>
