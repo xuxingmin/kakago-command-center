@@ -12,9 +12,9 @@ interface OrderWithStore {
   store_name: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "待接单", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/30" },
-  making: { label: "制作中", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
+const statusConfig: Record<string, { label: string; color: string }> = {
+  pending: { label: "待接单", color: "text-yellow-400" },
+  making: { label: "制作中", color: "text-emerald-400" },
 };
 
 export function OrderStream() {
@@ -69,8 +69,12 @@ export function OrderStream() {
 
   const getItemsSummary = (items: any) => {
     if (!items || !Array.isArray(items)) return "—";
-    const names = items.map((i: any) => i.name || i.product_name || "商品").slice(0, 2);
-    return names.join("、") + (items.length > 2 ? ` 等${items.length}件` : "");
+    const grouped = new Map<string, number>();
+    items.forEach((i: any) => {
+      const name = i.name || i.product_name || "商品";
+      grouped.set(name, (grouped.get(name) || 0) + (i.quantity || 1));
+    });
+    return Array.from(grouped.entries()).map(([name, qty]) => `${name}×${qty}`).join(" ");
   };
 
   return (
@@ -102,10 +106,7 @@ export function OrderStream() {
             return (
               <div
                 key={order.id}
-                className={cn(
-                  "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border",
-                  status.bg
-                )}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border border-border/50 bg-card"
               >
                 <span className="numeric text-muted-foreground w-16 flex-shrink-0">
                   {formatTime(order.created_at)}
