@@ -343,7 +343,13 @@ function InboundManagement() {
                 </div>
               </div>
             </div>
-            <Button onClick={() => inboundMutation.mutate()} disabled={!form.materialId || !form.qty || !form.price || inboundMutation.isPending} className="w-full mt-4">
+            {form.qty && form.price && Number(form.qty) > 0 && Number(form.price) > 0 && (
+              <div className="flex justify-between items-center px-1 text-sm">
+                <span className="text-muted-foreground">采购总额</span>
+                <span className="font-mono font-semibold text-primary">¥{(Number(form.qty) * Number(form.price)).toFixed(2)}</span>
+              </div>
+            )}
+            <Button onClick={() => inboundMutation.mutate()} disabled={!form.materialId || !form.qty || !form.price || inboundMutation.isPending} className="w-full mt-2">
               {inboundMutation.isPending ? "提交中..." : "确认入库"}
             </Button>
           </DialogContent>
