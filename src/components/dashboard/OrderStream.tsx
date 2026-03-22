@@ -108,8 +108,6 @@ export function OrderStream() {
                 key={order.id}
                 className="flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border border-border/50 bg-card"
               >
-                )}
-              >
                 <span className="numeric text-muted-foreground w-16 flex-shrink-0">
                   {formatTime(order.created_at)}
                 </span>
