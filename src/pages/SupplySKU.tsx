@@ -516,10 +516,7 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
               <Label className="text-xs">物料名称 *</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：厚椰乳" className="bg-background border-border" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">单位成本 (¥)</Label>
-              <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} className="bg-background border-border" />
-            </div>
+            <p className="text-[11px] text-muted-foreground/70 italic">💡 成本由「总部库存 → 采购入库」自动加权计算，此处无需定义</p>
           </div>
 
           {/* Section: 规格换算 */}
