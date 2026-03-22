@@ -31,6 +31,7 @@ type Material = {
   unit_purchase: string;
   unit_usage: string;
   conversion_rate: number;
+  supply_mode: string;
 };
 
 // Two-level category mapping
