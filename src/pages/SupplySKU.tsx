@@ -247,11 +247,11 @@ export default function SupplySKU() {
             <table className="w-full caption-bottom text-sm table-fixed">
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
                  <tr className="border-border">
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">一级分类</th>
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">二级分类</th>
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[18%]">物料名称</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[9%]">一级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[9%]">二级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[16%]">物料名称</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">采购规格</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">消耗规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[18%]">换算率</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">供货模式</th>
                   <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[14%]">
