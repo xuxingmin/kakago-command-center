@@ -411,7 +411,6 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
   const [name, setName] = useState(material?.name || "");
   const [mainCategory, setMainCategory] = useState(material?.main_category || "食材");
   const [subCategory, setSubCategory] = useState(material?.sub_category || "咖啡豆");
-  const [cost, setCost] = useState(material?.cost?.toString() || "0");
   const [unitPurchase, setUnitPurchase] = useState(material?.unit_purchase || "箱");
   const [unitUsage, setUnitUsage] = useState(material?.unit_usage || "g");
   const [conversionRate, setConversionRate] = useState(material?.conversion_rate?.toString() || "1");
