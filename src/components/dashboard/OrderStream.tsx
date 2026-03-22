@@ -12,9 +12,9 @@ interface OrderWithStore {
   store_name: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "待接单", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/30" },
-  making: { label: "制作中", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
+const statusConfig: Record<string, { label: string; color: string }> = {
+  pending: { label: "待接单", color: "text-yellow-400" },
+  making: { label: "制作中", color: "text-emerald-400" },
 };
 
 export function OrderStream() {
