@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Package, Layers, Check, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Package, Layers, Check, AlertTriangle, Pencil, Trash2, RefreshCw, PenLine } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 type Product = {
@@ -30,6 +31,7 @@ type Material = {
   unit_purchase: string;
   unit_usage: string;
   conversion_rate: number;
+  supply_mode: string;
 };
 
 // Two-level category mapping
@@ -245,15 +247,16 @@ export default function SupplySKU() {
             <table className="w-full caption-bottom text-sm table-fixed">
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
                  <tr className="border-border">
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">一级分类</th>
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">二级分类</th>
-                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[18%]">物料名称</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[9%]">一级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[9%]">二级分类</th>
+                  <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[16%]">物料名称</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">采购规格</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">消耗规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[18%]">换算率</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">供货模式</th>
                   <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[14%]">
-                    <span title="由入库记录加权计算，不可手动修改">加权平均单价</span>
-                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（消耗单位·只读）</span>
+                    <span title="统配物料由入库加权计算；直供物料手动定义">单价（消耗单位）</span>
+                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（统配只读 / 直供可编辑）</span>
                   </th>
                   <th className="h-11 px-3 align-middle font-medium text-muted-foreground w-[10%]">操作</th>
                 </tr>
@@ -299,7 +302,30 @@ export default function SupplySKU() {
                             (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-mono text-muted-foreground" title="由入库加权计算，此处不可编辑">¥{material.cost.toFixed(2)}/{material.unit_usage}</td>
+                        <td className="px-3 py-2 text-center">
+                          <Badge variant={material.supply_mode === '直供' ? 'secondary' : 'outline'} className="text-[10px]">
+                            {material.supply_mode === '直供' ? '直供' : '统配'}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-muted-foreground">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1">
+                                  ¥{material.cost.toFixed(2)}/{material.unit_usage}
+                                  {material.supply_mode === '直供' ? (
+                                    <PenLine className="w-3 h-3 text-warning inline-block" />
+                                  ) : (
+                                    <RefreshCw className="w-3 h-3 text-primary inline-block" />
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {material.supply_mode === '直供' ? '人工定义采购单价' : '由入库记录加权计算'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex gap-1">
                             <MaterialDialog queryClient={queryClient} material={material} />
@@ -405,7 +431,7 @@ function ProductDialog({ queryClient, product }: { queryClient: any; product?: P
   );
 }
 
-// Material Dialog Component — with cascading category selects
+// Material Dialog Component — with cascading category selects & supply mode
 function MaterialDialog({ queryClient, material }: { queryClient: any; material?: Material }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(material?.name || "");
@@ -414,8 +440,27 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
   const [unitPurchase, setUnitPurchase] = useState(material?.unit_purchase || "箱");
   const [unitUsage, setUnitUsage] = useState(material?.unit_usage || "g");
   const [conversionRate, setConversionRate] = useState(material?.conversion_rate?.toString() || "1");
+  const [supplyMode, setSupplyMode] = useState(material?.supply_mode || "统配");
+  const [purchasePrice, setPurchasePrice] = useState("");
 
   const isEdit = !!material;
+  const isDirect = supplyMode === "直供";
+  const rate = parseFloat(conversionRate) || 0;
+
+  // For direct supply editing, initialize purchase price from cost * conversion_rate
+  const initPurchasePrice = () => {
+    if (isEdit && material?.supply_mode === "直供" && material.cost > 0) {
+      setPurchasePrice((material.cost * (material.conversion_rate || 1)).toFixed(2));
+    } else {
+      setPurchasePrice("");
+    }
+  };
+
+  const computedConsumptionPrice = (() => {
+    const pp = parseFloat(purchasePrice);
+    if (!pp || !rate || rate <= 0) return null;
+    return pp / rate;
+  })();
 
   const mapToLegacyCategory = (main: string, sub: string): string => {
     if (sub === "咖啡豆") return "bean";
@@ -435,24 +480,32 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const rate = parseFloat(conversionRate);
-      if (!rate || rate <= 0) throw new Error("换算率必须大于0");
+      const rateVal = parseFloat(conversionRate);
+      if (!rateVal || rateVal <= 0) throw new Error("换算率必须大于0");
 
-      const payload = {
+      const payload: Record<string, any> = {
         name: name.trim(),
         category: mapToLegacyCategory(mainCategory, subCategory) as any,
         main_category: mainCategory,
         sub_category: subCategory,
         unit_purchase: unitPurchase.trim(),
         unit_usage: unitUsage.trim(),
-        conversion_rate: rate,
+        conversion_rate: rateVal,
+        supply_mode: supplyMode,
       };
 
+      // For direct supply, save the consumption unit price
+      if (isDirect) {
+        const pp = parseFloat(purchasePrice);
+        if (!pp || pp <= 0) throw new Error("直供物料需填写采购单价");
+        payload.cost = pp / rateVal; // store as consumption unit price
+      }
+
       if (isEdit) {
-        const { error } = await supabase.from("sku_materials").update(payload).eq("id", material.id);
+        const { error } = await supabase.from("sku_materials").update(payload as any).eq("id", material.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("sku_materials").insert(payload);
+        const { error } = await supabase.from("sku_materials").insert(payload as any);
         if (error) throw error;
       }
     },
@@ -463,13 +516,14 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
       if (!isEdit) {
         setName(""); setMainCategory("食材"); setSubCategory("咖啡豆");
         setUnitPurchase("箱"); setUnitUsage("g"); setConversionRate("1");
+        setSupplyMode("统配"); setPurchasePrice("");
       }
     },
     onError: (err: any) => toast.error(err.message || "操作失败"),
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) initPurchasePrice(); }}>
       <DialogTrigger asChild>
         {isEdit ? (
           <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="w-4 h-4" /></Button>
@@ -516,7 +570,16 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
               <Label className="text-xs">物料名称 *</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：厚椰乳" className="bg-background border-border" />
             </div>
-            <p className="text-[11px] text-muted-foreground/70 italic">💡 成本由「总部库存 → 采购入库」自动加权计算，此处无需定义</p>
+            <div className="space-y-1.5">
+              <Label className="text-xs">供货模式 *</Label>
+              <Select value={supplyMode} onValueChange={setSupplyMode}>
+                <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="统配">统配 — 进KAKAGO仓</SelectItem>
+                  <SelectItem value="直供">直供 — 不进仓</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Section: 规格换算 */}
@@ -536,10 +599,45 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
                 <Input type="number" value={conversionRate} onChange={(e) => setConversionRate(e.target.value)} className="bg-background border-border" />
               </div>
             </div>
-            {parseFloat(conversionRate) > 0 && (
+            {rate > 0 && (
               <p className="text-xs text-primary font-mono">
                 1 {unitPurchase} = {conversionRate} {unitUsage}
               </p>
+            )}
+          </div>
+
+          {/* Section: 采购单价 — conditional on supply mode */}
+          <div className="space-y-3 p-3 rounded-lg border border-border bg-secondary/10">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">采购单价</p>
+            {isDirect ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">采购单价（¥/{unitPurchase}）*</Label>
+                  <Input
+                    type="number"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                    placeholder="请输入采购单价"
+                    className="bg-background border-border"
+                  />
+                </div>
+                {computedConsumptionPrice !== null && (
+                  <p className="text-[11px] text-muted-foreground/70">
+                    折合消耗单价：<span className="font-mono text-primary">¥{computedConsumptionPrice.toFixed(4)}/{unitUsage}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground/70 italic">⚠️ 修改单价仅对之后新建的单据生效，不影响历史单据</p>
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-xs">单位成本</Label>
+                <Input
+                  value={isEdit ? `¥${material?.cost.toFixed(2) || '0.00'}/${material?.unit_usage || unitUsage}` : '¥0.00'}
+                  disabled
+                  className="bg-muted border-border text-muted-foreground cursor-not-allowed"
+                />
+                <p className="text-[11px] text-muted-foreground/70 italic">🔄 单价由「总部库存管理 → 采购入库」自动加权核算</p>
+              </div>
             )}
           </div>
 

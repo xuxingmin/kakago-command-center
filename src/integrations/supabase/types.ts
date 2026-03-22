@@ -916,6 +916,7 @@ export type Database = {
           min_package_unit: number
           name: string
           sub_category: string
+          supply_mode: string
           unit_purchase: string
           unit_usage: string
           updated_at: string
@@ -931,6 +932,7 @@ export type Database = {
           min_package_unit?: number
           name: string
           sub_category?: string
+          supply_mode?: string
           unit_purchase?: string
           unit_usage?: string
           updated_at?: string
@@ -946,6 +948,7 @@ export type Database = {
           min_package_unit?: number
           name?: string
           sub_category?: string
+          supply_mode?: string
           unit_purchase?: string
           unit_usage?: string
           updated_at?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.sku_materials ADD COLUMN supply_mode text NOT NULL DEFAULT '统配';
