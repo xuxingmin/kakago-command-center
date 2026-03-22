@@ -630,10 +630,13 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
                     </div>
                   )}
                   {req.status === "pending_shipment" && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs border-orange-500/30 text-orange-400 hover:bg-orange-500/20" onClick={e => { e.stopPropagation(); handleShip(req.id); }}>确认发货</Button>
+                    <Badge variant="outline" className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">待发货</Badge>
                   )}
                   {req.status === "in_transit" && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/20" onClick={e => { e.stopPropagation(); handleComplete(req.id); }}>确认收货</Button>
+                    <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">待配送</Badge>
+                  )}
+                  {req.status === "completed" && (
+                    <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">已完成</Badge>
                   )}
                   {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </div>
