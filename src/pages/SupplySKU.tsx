@@ -299,7 +299,7 @@ export default function SupplySKU() {
                             (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-mono">¥{material.cost.toFixed(2)}</td>
+                        <td className="px-3 py-2 text-right font-mono text-muted-foreground" title="由入库加权计算，此处不可编辑">¥{material.cost.toFixed(2)}/{material.unit_usage}</td>
                         <td className="px-3 py-2">
                           <div className="flex gap-1">
                             <MaterialDialog queryClient={queryClient} material={material} />
