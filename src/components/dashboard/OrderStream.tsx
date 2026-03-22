@@ -69,8 +69,12 @@ export function OrderStream() {
 
   const getItemsSummary = (items: any) => {
     if (!items || !Array.isArray(items)) return "—";
-    const names = items.map((i: any) => i.name || i.product_name || "商品").slice(0, 2);
-    return names.join("、") + (items.length > 2 ? ` 等${items.length}件` : "");
+    const grouped = new Map<string, number>();
+    items.forEach((i: any) => {
+      const name = i.name || i.product_name || "商品";
+      grouped.set(name, (grouped.get(name) || 0) + (i.quantity || 1));
+    });
+    return Array.from(grouped.entries()).map(([name, qty]) => `${name}×${qty}`).join(" ");
   };
 
   return (
