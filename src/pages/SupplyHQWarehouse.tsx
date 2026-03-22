@@ -357,7 +357,7 @@ function InboundManagement() {
               <th className="py-3 px-3 font-medium">供应商</th>
               <th className="py-3 px-3 font-medium">物料</th>
               <th className="py-3 px-3 font-medium text-right">数量</th>
-              <th className="py-3 px-3 font-medium text-right">单价</th>
+              <th className="py-3 px-3 font-medium text-right">采购单价 (¥/采购规格)</th>
               <th className="py-3 px-3 font-medium text-right">总额</th>
               <th className="py-3 px-3 font-medium">批次</th>
             </tr>
