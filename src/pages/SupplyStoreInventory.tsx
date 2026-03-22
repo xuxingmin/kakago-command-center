@@ -612,7 +612,7 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-foreground text-sm">{req.id}</span>
                     <span className="text-foreground text-sm font-medium">{req.storeName}</span>
-                    <Badge variant="outline" className={reqStatusMap[req.status].cls}>{reqStatusMap[req.status].label}</Badge>
+                    {req.status === "pending" && <Badge variant="outline" className={reqStatusMap[req.status].cls}>{reqStatusMap[req.status].label}</Badge>}
                     {req.logisticsNo && <span className="text-xs text-muted-foreground">物流: {req.logisticsNo}</span>}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
