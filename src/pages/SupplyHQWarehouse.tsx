@@ -189,10 +189,12 @@ function InboundManagement() {
   const { data: materials = [] } = useQuery({
     queryKey: ["all-materials"],
     queryFn: async () => {
-      const { data } = await supabase.from("sku_materials").select("id, name, unit_purchase, unit_usage, conversion_rate").order("name");
+      const { data } = await supabase.from("sku_materials").select("id, name, unit_purchase, unit_usage, conversion_rate, min_package_unit, full_capacity, main_category, sub_category").order("name");
       return data || [];
     },
   });
+
+  const selectedMaterial = materials.find((m: any) => m.id === form.materialId);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["hq-inbound"],
