@@ -27,30 +27,6 @@ const supplyModules = [
     icon: Store,
     path: "/supply/store-inventory",
   },
-  {
-    title: "全城产能监控",
-    description: "实时查看各门店剩余产能",
-    icon: BarChart3,
-    path: "/supply/dashboard",
-  },
-  {
-    title: "商户要货",
-    description: "门店主动追加物料申请",
-    icon: ShoppingCart,
-    path: "/supply/request",
-  },
-  {
-    title: "库存修正与盘点",
-    description: "校准系统库存与实际库存",
-    icon: ClipboardList,
-    path: "/supply/adjust",
-  },
-  {
-    title: "智能推配中心",
-    description: "自动计算补货量并生成配送单",
-    icon: Truck,
-    path: "/supply/push",
-  },
 ];
 
 export default function Supply() {
