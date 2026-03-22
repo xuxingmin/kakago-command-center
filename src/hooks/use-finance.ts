@@ -337,8 +337,6 @@ function generateMockSettlements(periodStart: string, periodEnd: string): Settle
     const platformFee = Math.floor(orderTotal * 0.05);
     const settlementAmount = orderTotal - couponCost - platformFee;
     
-    const statuses: Settlement["status"][] = ["pending", "confirmed", "paid", "completed"];
-    
     return {
       id: `mock-${index}`,
       store_id: `store-${index}`,
@@ -351,7 +349,7 @@ function generateMockSettlements(periodStart: string, periodEnd: string): Settle
       coupon_cost: couponCost,
       platform_fee: platformFee,
       settlement_amount: settlementAmount,
-      status: index % 3 === 0 ? "confirmed" : index % 3 === 1 ? "paid" : "pending" as const,
+      status: index % 2 === 0 ? "pending" : "completed" as const,
     };
   });
 }
