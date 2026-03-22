@@ -5,12 +5,11 @@ import { useSettlements } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { BulkExportDialog } from "./BulkExportDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: "待结算", color: "text-orange-400", bg: "bg-orange-400/10" },
-  confirmed: { label: "已确认", color: "text-blue-400", bg: "bg-blue-400/10" },
-  paid: { label: "已支付", color: "text-primary", bg: "bg-primary/10" },
-  completed: { label: "已完成", color: "text-success", bg: "bg-success/10" },
+  completed: { label: "已结算", color: "text-success", bg: "bg-success/10" },
 };
 
 export function SettlementStream() {
@@ -32,8 +31,9 @@ export function SettlementStream() {
   const [periodStart] = useState(lastWeek.start);
   const [periodEnd] = useState(lastWeek.end);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  const { settlements, summary, loading } = useSettlements(periodStart, periodEnd, statusFilter);
+  const { settlements, summary, loading, refetch } = useSettlements(periodStart, periodEnd, statusFilter);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => {
@@ -45,6 +45,25 @@ export function SettlementStream() {
 
   const handleExport = () => {
     toast.info("导出功能开发中...");
+  };
+
+  const handleConfirmSettlement = async (id: string) => {
+    setConfirmingId(id);
+    try {
+      const { error } = await supabase
+        .from("settlements")
+        .update({ status: "completed" as any, confirmed_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("结算已确认");
+      refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error("确认结算失败");
+    } finally {
+      setConfirmingId(null);
+    }
   };
 
   return (
@@ -69,7 +88,7 @@ export function SettlementStream() {
         <div className="flex items-center gap-2">
           {/* 状态筛选 */}
           <div className="flex items-center gap-1">
-            {["all", "pending", "confirmed", "paid"].map((status) => (
+            {["all", "pending", "completed"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
@@ -181,10 +200,25 @@ export function SettlementStream() {
                 <span className="text-right font-mono tabular-nums font-bold text-primary">
                   {formatCurrency(settlement.settlement_amount)}
                 </span>
-                <div className="flex justify-center">
-                  <span className={cn("px-2 py-0.5 rounded text-xs", status.bg, status.color)}>
-                    {status.label}
-                  </span>
+                <div className="flex justify-center items-center gap-1">
+                  {settlement.status === "pending" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[11px] px-2 border-orange-400/30 text-orange-400 hover:bg-orange-400/10"
+                      disabled={confirmingId === settlement.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirmSettlement(settlement.id);
+                      }}
+                    >
+                      {confirmingId === settlement.id ? "确认中..." : "确认结算"}
+                    </Button>
+                  ) : (
+                    <span className={cn("px-2 py-0.5 rounded text-xs", status.bg, status.color)}>
+                      {status.label}
+                    </span>
+                  )}
                 </div>
               </div>
             );

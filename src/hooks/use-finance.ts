@@ -14,7 +14,7 @@ export interface Settlement {
   coupon_cost: number;
   platform_fee: number;
   settlement_amount: number;
-  status: "pending" | "confirmed" | "paid" | "completed";
+  status: "pending" | "completed";
 }
 // Finance summary data
 interface FinanceSummary {
@@ -275,7 +275,54 @@ export function useSettlements(periodStart: string, periodEnd: string, status: s
     fetchSettlements();
   }, [periodStart, periodEnd, status]);
 
-  return { settlements, summary, loading };
+  const refetch = () => {
+    const fetchAgain = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from("settlements")
+          .select(`*, stores!inner(name)`)
+          .gte("period_start", periodStart)
+          .lte("period_end", periodEnd);
+        if (status !== "all") {
+          query = query.eq("status", status as any);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        if (data && data.length > 0) {
+          const mapped: Settlement[] = data.map((s: any) => ({
+            id: s.id, store_id: s.store_id, store_name: s.stores?.name || "未知门店",
+            period_start: s.period_start, period_end: s.period_end,
+            order_count: s.order_count, order_total: Number(s.order_total),
+            coupon_count: s.coupon_count, coupon_cost: Number(s.coupon_cost),
+            platform_fee: Number(s.platform_fee), settlement_amount: Number(s.settlement_amount),
+            status: s.status,
+          }));
+          setSettlements(mapped);
+          setSummary({
+            totalStores: mapped.length, totalOrders: mapped.reduce((sum, s) => sum + s.order_count, 0),
+            orderTotal: mapped.reduce((sum, s) => sum + s.order_total, 0),
+            couponCost: mapped.reduce((sum, s) => sum + s.coupon_cost, 0),
+            platformFee: mapped.reduce((sum, s) => sum + s.platform_fee, 0),
+            settlementAmount: mapped.reduce((sum, s) => sum + s.settlement_amount, 0),
+          });
+        } else {
+          const mock = generateMockSettlements(periodStart, periodEnd);
+          setSettlements(mock);
+          setSummary({
+            totalStores: mock.length, totalOrders: mock.reduce((sum, s) => sum + s.order_count, 0),
+            orderTotal: mock.reduce((sum, s) => sum + s.order_total, 0),
+            couponCost: mock.reduce((sum, s) => sum + s.coupon_cost, 0),
+            platformFee: mock.reduce((sum, s) => sum + s.platform_fee, 0),
+            settlementAmount: mock.reduce((sum, s) => sum + s.settlement_amount, 0),
+          });
+        }
+      } catch { /* ignore */ } finally { setLoading(false); }
+    };
+    fetchAgain();
+  };
+
+  return { settlements, summary, loading, refetch };
 }
 
 // Generate mock settlements for demo
@@ -290,8 +337,6 @@ function generateMockSettlements(periodStart: string, periodEnd: string): Settle
     const platformFee = Math.floor(orderTotal * 0.05);
     const settlementAmount = orderTotal - couponCost - platformFee;
     
-    const statuses: Settlement["status"][] = ["pending", "confirmed", "paid", "completed"];
-    
     return {
       id: `mock-${index}`,
       store_id: `store-${index}`,
@@ -304,7 +349,7 @@ function generateMockSettlements(periodStart: string, periodEnd: string): Settle
       coupon_cost: couponCost,
       platform_fee: platformFee,
       settlement_amount: settlementAmount,
-      status: index % 3 === 0 ? "confirmed" : index % 3 === 1 ? "paid" : "pending" as const,
+      status: index % 2 === 0 ? "pending" : "completed" as const,
     };
   });
 }
