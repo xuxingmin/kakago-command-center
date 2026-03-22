@@ -184,6 +184,7 @@ function InboundManagement() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ materialId: "", supplier: "", qty: "", price: "", batchNo: "", prodDate: "", expiryDate: "" });
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: materials = [] } = useQuery({
     queryKey: ["all-materials"],
