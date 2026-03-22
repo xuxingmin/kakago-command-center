@@ -128,7 +128,7 @@ export function FinanceKPIRow() {
   };
 
   return (
-    <div className="grid grid-cols-7 gap-3">
+    <div className="grid grid-cols-6 gap-3">
       {/* 1. 总营收 */}
       <KPIItem
         title="总营收"
@@ -137,30 +137,23 @@ export function FinanceKPIRow() {
         icon={DollarSign}
         highlight
       />
-      {/* 2. 今日营收 */}
-      <KPIItem
-        title="今日营收"
-        value={loading ? "--" : formatCurrency(data.todayRevenue)}
-        trend={8.3}
-        icon={Coffee}
-      />
-      {/* 3. 物料成本 */}
+      {/* 2. 物料成本 */}
       <KPIItem
         title="物料成本"
         value={loading ? "--" : formatCurrency(data.materialCost)}
         trend={-3.2}
         icon={Package}
       />
-      {/* 4. 毛利率 */}
+      {/* 3. 毛利率 */}
       <GrossMarginCard value={data.grossMargin} loading={loading} />
-      {/* 5. 待结算 */}
+      {/* 4. 待结算 */}
       <KPIItem
         title="待结算"
         value={loading ? "--" : formatCurrency(data.pendingSettlement)}
         subValue="本周"
         icon={CreditCard}
       />
-      {/* 6-7. 成本构成 - 占2列 */}
+      {/* 5-6. 成本构成 - 占2列 */}
       <CostBreakdownMini />
     </div>
   );
