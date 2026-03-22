@@ -106,9 +106,8 @@ export function OrderStream() {
             return (
               <div
                 key={order.id}
-                className={cn(
-                  "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border",
-                  status.bg
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border border-border/50 bg-card"
+              >
                 )}
               >
                 <span className="numeric text-muted-foreground w-16 flex-shrink-0">
