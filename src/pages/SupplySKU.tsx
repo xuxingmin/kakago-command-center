@@ -443,7 +443,6 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
         category: mapToLegacyCategory(mainCategory, subCategory) as any,
         main_category: mainCategory,
         sub_category: subCategory,
-        cost: parseFloat(cost) || 0,
         unit_purchase: unitPurchase.trim(),
         unit_usage: unitUsage.trim(),
         conversion_rate: rate,
