@@ -612,7 +612,7 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-foreground text-sm">{req.id}</span>
                     <span className="text-foreground text-sm font-medium">{req.storeName}</span>
-                    <Badge variant="outline" className={reqStatusMap[req.status].cls}>{reqStatusMap[req.status].label}</Badge>
+                    {req.status === "pending" && <Badge variant="outline" className={reqStatusMap[req.status].cls}>{reqStatusMap[req.status].label}</Badge>}
                     {req.logisticsNo && <span className="text-xs text-muted-foreground">物流: {req.logisticsNo}</span>}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -629,14 +629,8 @@ function MerchantRequestsTab({ requests, setRequests, stores, materials }: { req
                       <Button size="sm" variant="outline" className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/20" onClick={() => handleReject(req.id)}>拒绝</Button>
                     </div>
                   )}
-                  {req.status === "pending_shipment" && (
-                    <Badge variant="outline" className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">待发货</Badge>
-                  )}
-                  {req.status === "in_transit" && (
-                    <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">待配送</Badge>
-                  )}
-                  {req.status === "completed" && (
-                    <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">已完成</Badge>
+                  {req.status !== "pending" && (
+                    <Badge variant="outline" className={reqStatusMap[req.status].cls + " text-xs"}>{reqStatusMap[req.status].label}</Badge>
                   )}
                   {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </div>
