@@ -14,7 +14,7 @@ export interface Settlement {
   coupon_cost: number;
   platform_fee: number;
   settlement_amount: number;
-  status: "pending" | "confirmed" | "paid" | "completed";
+  status: "pending" | "completed";
 }
 // Finance summary data
 interface FinanceSummary {
