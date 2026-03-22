@@ -502,10 +502,10 @@ function MaterialDialog({ queryClient, material }: { queryClient: any; material?
       }
 
       if (isEdit) {
-        const { error } = await supabase.from("sku_materials").update(payload).eq("id", material.id);
+        const { error } = await supabase.from("sku_materials").update(payload as any).eq("id", material.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("sku_materials").insert(payload);
+        const { error } = await supabase.from("sku_materials").insert(payload as any);
         if (error) throw error;
       }
     },
