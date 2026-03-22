@@ -302,7 +302,30 @@ export default function SupplySKU() {
                             (1{material.unit_purchase}={material.conversion_rate}{material.unit_usage})
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-mono text-muted-foreground" title="由入库加权计算，此处不可编辑">¥{material.cost.toFixed(2)}/{material.unit_usage}</td>
+                        <td className="px-3 py-2 text-center">
+                          <Badge variant={material.supply_mode === '直供' ? 'secondary' : 'outline'} className="text-[10px]">
+                            {material.supply_mode === '直供' ? '直供' : '统配'}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-muted-foreground">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1">
+                                  ¥{material.cost.toFixed(2)}/{material.unit_usage}
+                                  {material.supply_mode === '直供' ? (
+                                    <PenLine className="w-3 h-3 text-amber-500 inline-block" />
+                                  ) : (
+                                    <RefreshCw className="w-3 h-3 text-primary inline-block" />
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {material.supply_mode === '直供' ? '人工定义采购单价' : '由入库记录加权计算'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex gap-1">
                             <MaterialDialog queryClient={queryClient} material={material} />
