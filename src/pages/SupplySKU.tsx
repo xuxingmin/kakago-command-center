@@ -244,14 +244,17 @@ export default function SupplySKU() {
           <div className="rounded-lg border border-border bg-card overflow-hidden overflow-x-hidden max-h-[calc(100vh-250px)] overflow-y-auto relative">
             <table className="w-full caption-bottom text-sm table-fixed">
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
-                <tr className="border-border">
+                 <tr className="border-border">
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">一级分类</th>
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[10%]">二级分类</th>
                   <th className="h-11 px-3 text-left align-middle font-medium text-muted-foreground w-[18%]">物料名称</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
-                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[20%]">换算率</th>
-                  <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[12%]">成本</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[18%]">换算率</th>
+                  <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[14%]">
+                    <span title="由入库记录加权计算，不可手动修改">加权平均单价</span>
+                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（消耗单位·只读）</span>
+                  </th>
                   <th className="h-11 px-3 align-middle font-medium text-muted-foreground w-[10%]">操作</th>
                 </tr>
               </thead>
