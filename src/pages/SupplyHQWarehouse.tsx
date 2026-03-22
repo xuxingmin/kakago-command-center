@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Warehouse, PackagePlus, Truck, FileText, AlertTriangle, Search, Plus, Printer } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -183,14 +184,17 @@ function InboundManagement() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ materialId: "", supplier: "", qty: "", price: "", batchNo: "", prodDate: "", expiryDate: "" });
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: materials = [] } = useQuery({
     queryKey: ["all-materials"],
     queryFn: async () => {
-      const { data } = await supabase.from("sku_materials").select("id, name, unit_purchase, unit_usage, conversion_rate").order("name");
+      const { data } = await supabase.from("sku_materials").select("id, name, unit_purchase, unit_usage, conversion_rate, min_package_unit, full_capacity, main_category, sub_category").order("name");
       return data || [];
     },
   });
+
+  const selectedMaterial = materials.find((m: any) => m.id === form.materialId);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["hq-inbound"],
@@ -275,37 +279,58 @@ function InboundManagement() {
           </DialogTrigger>
           <DialogContent className="bg-card border-border max-w-lg">
             <DialogHeader><DialogTitle>采购入库</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-2">
-                <Label>物料</Label>
+            <div className="space-y-4">
+              {/* 物料选择 + 新增物料 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>物料 (从 SKU 主数据选择)</Label>
+                  <Button variant="ghost" size="sm" className="text-xs text-primary h-6 px-2" onClick={() => navigate("/supply/sku")}>
+                    <Plus className="w-3 h-3 mr-1" />新增物料
+                  </Button>
+                </div>
                 <Select value={form.materialId} onValueChange={(v) => setForm({ ...form, materialId: v })}>
                   <SelectTrigger><SelectValue placeholder="选择物料" /></SelectTrigger>
-                  <SelectContent>{materials.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.name} ({m.unit_purchase})</SelectItem>)}</SelectContent>
+                  <SelectContent>{materials.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>供应商</Label>
-                <Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="供应商名称" />
-              </div>
-              <div className="space-y-2">
-                <Label>采购数量 (采购单位)</Label>
-                <Input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>单价 (元/采购单位)</Label>
-                <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>批次号</Label>
-                <Input value={form.batchNo} onChange={(e) => setForm({ ...form, batchNo: e.target.value })} placeholder="可选" />
-              </div>
-              <div className="space-y-2">
-                <Label>生产日期</Label>
-                <Input type="date" value={form.prodDate} onChange={(e) => setForm({ ...form, prodDate: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>保质期至</Label>
-                <Input type="date" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} />
+
+              {/* 自动回填的物料主数据（只读） */}
+              {selectedMaterial && (
+                <div className="rounded-md bg-muted/30 border border-border/30 p-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  <div className="flex justify-between"><span className="text-muted-foreground">采购单位</span><span className="text-foreground font-medium">{selectedMaterial.unit_purchase}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">消耗单位</span><span className="text-foreground font-medium">{selectedMaterial.unit_usage}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">MPU (最小包装)</span><span className="text-foreground font-medium">{selectedMaterial.min_package_unit}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">换算率</span><span className="text-foreground font-medium">1{selectedMaterial.unit_purchase} = {selectedMaterial.conversion_rate}{selectedMaterial.unit_usage}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">满载容量</span><span className="text-foreground font-medium">{selectedMaterial.full_capacity}{selectedMaterial.unit_usage}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">分类</span><span className="text-foreground font-medium">{selectedMaterial.main_category}/{selectedMaterial.sub_category}</span></div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>供应商</Label>
+                  <Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="供应商名称" />
+                </div>
+                <div className="space-y-2">
+                  <Label>采购数量{selectedMaterial ? ` (${selectedMaterial.unit_purchase})` : ""}</Label>
+                  <Input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>进货单价{selectedMaterial ? ` (元/${selectedMaterial.unit_purchase})` : ""}</Label>
+                  <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>批次号</Label>
+                  <Input value={form.batchNo} onChange={(e) => setForm({ ...form, batchNo: e.target.value })} placeholder="可选" />
+                </div>
+                <div className="space-y-2">
+                  <Label>生产日期</Label>
+                  <Input type="date" value={form.prodDate} onChange={(e) => setForm({ ...form, prodDate: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>保质期至</Label>
+                  <Input type="date" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} />
+                </div>
               </div>
             </div>
             <Button onClick={() => inboundMutation.mutate()} disabled={!form.materialId || !form.qty || !form.price || inboundMutation.isPending} className="w-full mt-4">
