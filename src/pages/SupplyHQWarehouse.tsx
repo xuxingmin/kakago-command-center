@@ -316,8 +316,18 @@ function InboundManagement() {
                   <Input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>进货单价{selectedMaterial ? ` (元/${selectedMaterial.unit_purchase})` : ""}</Label>
-                  <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                  <Label>采购单价{selectedMaterial ? ` (¥/${selectedMaterial.unit_purchase})` : ""}</Label>
+                  <div className="relative">
+                    <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="pr-16" />
+                    {selectedMaterial && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">元/{selectedMaterial.unit_purchase}</span>
+                    )}
+                  </div>
+                  {selectedMaterial && form.price && Number(form.price) > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      折合消耗单价：¥{(Number(form.price) / Number(selectedMaterial.conversion_rate)).toFixed(4)} / {selectedMaterial.unit_usage}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>批次号</Label>
