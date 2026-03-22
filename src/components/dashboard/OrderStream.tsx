@@ -1,22 +1,20 @@
 import { useEffect, useState, useRef } from "react";
-import { Activity, Coffee, Truck, CheckCircle, Clock } from "lucide-react";
+import { Activity, Coffee, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 interface OrderWithStore {
   id: string;
-  order_no: string;
   status: string;
   created_at: string;
+  total_amount: number;
+  items: any;
   store_name: string;
 }
 
-const statusConfig: Record<string, { label: string; icon: typeof Coffee; color: string }> = {
-  pending: { label: "待接单", icon: Clock, color: "text-orange-400" },
-  making: { label: "制作中", icon: Coffee, color: "text-yellow-400" },
-  delivering: { label: "配送中", icon: Truck, color: "text-primary animate-pulse" },
-  completed: { label: "已完成", icon: CheckCircle, color: "text-success" },
-  cancelled: { label: "已取消", icon: Clock, color: "text-muted-foreground" },
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: "待接单", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/30" },
+  making: { label: "制作中", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
 };
 
 export function OrderStream() {
@@ -24,94 +22,70 @@ export function OrderStream() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
 
-  // 获取订单列表
   const fetchOrders = async () => {
     const { data, error } = await supabase
       .from("orders")
-      .select(`
-        id,
-        order_no,
-        status,
-        created_at,
-        stores!inner(name)
-      `)
+      .select(`id, status, created_at, total_amount, items, stores!inner(name)`)
       .in("status", ["pending", "making"])
       .order("created_at", { ascending: false })
       .limit(30);
 
     if (!error && data) {
-      const formatted = data.map((order: any) => ({
+      setOrders(data.map((order: any) => ({
         id: order.id,
-        order_no: order.order_no,
         status: order.status,
         created_at: order.created_at,
+        total_amount: order.total_amount,
+        items: order.items,
         store_name: order.stores?.name || "未知门店",
-      }));
-      setOrders(formatted);
+      })));
     }
   };
 
-  // 初始化加载
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
-  // Realtime 订阅
   useEffect(() => {
     const channel = supabase
       .channel("orders-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        async (payload) => {
-          console.log("Order change:", payload);
-          // 重新获取最新数据
-          await fetchOrders();
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => fetchOrders())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
+        const updated = payload.new as any;
+        if (updated.status === "making") {
+          setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, status: "making" } : o));
+        } else {
+          setOrders(prev => prev.filter(o => o.id !== updated.id));
         }
-      )
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // 自动滚动效果
   useEffect(() => {
-    if (isAutoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
+    if (isAutoScroll && scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [orders, isAutoScroll]);
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString("zh-CN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+  const formatTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  const getItemsSummary = (items: any) => {
+    if (!items || !Array.isArray(items)) return "—";
+    const names = items.map((i: any) => i.name || i.product_name || "商品").slice(0, 2);
+    return names.join("、") + (items.length > 2 ? ` 等${items.length}件` : "");
   };
 
   return (
     <div className="bg-card border border-secondary rounded-lg p-3 h-full flex flex-col">
-      {/* 标题栏 */}
       <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">实时订单流</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground numeric">
-            {orders.length} 条
-          </span>
+          <span className="text-[10px] text-muted-foreground numeric">{orders.length} 条</span>
           <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
         </div>
       </div>
 
-      {/* 订单列表 */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-1 scrollbar-thin"
@@ -123,36 +97,30 @@ export function OrderStream() {
             暂无订单数据，等待新订单...
           </div>
         ) : (
-          orders.map((order, index) => {
+          orders.map((order) => {
             const status = statusConfig[order.status] || statusConfig.pending;
-            const StatusIcon = status.icon;
             return (
               <div
                 key={order.id}
                 className={cn(
-                  "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-300",
-                  "bg-background/50 hover:bg-primary/10 border border-transparent hover:border-primary/30",
-                  index === 0 && "animate-fade-in bg-primary/5 border-primary/20"
+                  "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all duration-500 border",
+                  status.bg
                 )}
               >
-                {/* 时间 */}
                 <span className="numeric text-muted-foreground w-16 flex-shrink-0">
                   {formatTime(order.created_at)}
                 </span>
-
-                {/* 订单号 */}
-                <span className="numeric text-primary/80 w-28 flex-shrink-0 truncate">
-                  {order.order_no}
+                <span className="text-foreground/80 flex-1 truncate">
+                  {getItemsSummary(order.items)}
                 </span>
-
-                {/* 门店 */}
-                <span className="text-foreground/70 flex-1 truncate">
+                <span className="numeric text-foreground font-medium w-14 text-right flex-shrink-0">
+                  ¥{order.total_amount.toFixed(0)}
+                </span>
+                <span className="text-foreground/60 w-20 truncate text-right flex-shrink-0">
                   {order.store_name}
                 </span>
-
-                {/* 状态 */}
-                <div className={cn("flex items-center gap-1 flex-shrink-0", status.color)}>
-                  <StatusIcon className="w-3 h-3" />
+                <div className={cn("flex items-center gap-1 flex-shrink-0 w-16 justify-end", status.color)}>
+                  {order.status === "pending" ? <Clock className="w-3 h-3" /> : <Coffee className="w-3 h-3" />}
                   <span className="text-[10px]">{status.label}</span>
                 </div>
               </div>
@@ -161,7 +129,6 @@ export function OrderStream() {
         )}
       </div>
 
-      {/* 底部状态 */}
       <div className="flex-shrink-0 pt-2 border-t border-border mt-2">
         <div className="flex justify-between text-[10px] text-muted-foreground">
           <span>实时同步中 · 悬停暂停滚动</span>
