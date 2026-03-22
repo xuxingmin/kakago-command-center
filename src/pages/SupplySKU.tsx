@@ -253,9 +253,10 @@ export default function SupplySKU() {
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">采购规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[10%]">消耗规格</th>
                   <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[18%]">换算率</th>
+                  <th className="h-11 px-3 text-center align-middle font-medium text-muted-foreground w-[8%]">供货模式</th>
                   <th className="h-11 px-3 text-right align-middle font-medium text-muted-foreground w-[14%]">
-                    <span title="由入库记录加权计算，不可手动修改">加权平均单价</span>
-                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（消耗单位·只读）</span>
+                    <span title="统配物料由入库加权计算；直供物料手动定义">单价（消耗单位）</span>
+                    <span className="block text-[10px] text-muted-foreground/60 font-normal">（统配只读 / 直供可编辑）</span>
                   </th>
                   <th className="h-11 px-3 align-middle font-medium text-muted-foreground w-[10%]">操作</th>
                 </tr>
