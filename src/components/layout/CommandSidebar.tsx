@@ -42,7 +42,9 @@ export function CommandSidebar() {
         {/* 导航菜单 */}
         <nav className="flex-1 py-3 px-2 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = item.matchPrefix
+              ? location.pathname.startsWith(item.path)
+              : location.pathname === item.path;
             const Icon = item.icon;
 
             return (
