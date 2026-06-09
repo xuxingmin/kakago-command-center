@@ -551,7 +551,7 @@ export default function AfterSalesReview() {
             {/* Finance */}
             <section>
               <div className="text-xs text-muted-foreground mb-2">
-                原单记账底盘
+                收付通账期记账底盘 · 实时账期标签明细
               </div>
               <div className="rounded border border-[#222] p-3 text-sm space-y-2">
                 <div className="flex justify-between">
