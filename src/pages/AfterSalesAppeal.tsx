@@ -105,8 +105,8 @@ export default function AfterSalesAppeal() {
       title: "已改判",
       description:
         overturnKind === "overturned_logistics"
-          ? "重新释放 5元制作费，整笔费用变更为「外部跑腿平台应收索赔账目」。"
-          : "重新释放 5元制作费，损失变更为「总部大盘营销/客情损耗」。",
+          ? "已重新释放 5元制作费与物料费，整笔费用变更为「外部跑腿平台应收索赔账目」，由总部于期末向跑腿公司开票索赔。"
+          : "已重新释放 5元制作费与物料费，损失变更为「总部大盘营销/客情损耗」，由总部利润对账承担。",
     });
     setOverturnTarget(null);
     setOverturnKind("");
