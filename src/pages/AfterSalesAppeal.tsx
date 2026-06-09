@@ -245,7 +245,7 @@ export default function AfterSalesAppeal() {
               <Label htmlFor="ov-1" className="font-normal flex-1 cursor-pointer">
                 <div className="font-medium">改判为物流责任结案</div>
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  撤销对该加盟店的扣款处罚。系统在期末结算单中重新释放并计发商家该单的 5元制作费，抹除划扣记录；同时将该整笔费用标签变更为「外部跑腿平台应收索赔账目」。
+                  撤销对该加盟店的扣款处罚。系统在期末结算单中重新释放并计发商家该单的 5元制作费与物料费，抹除门店账中的划扣罚款记录；同时将该整笔费用标签变更为「外部跑腿平台应收索赔账目」，由总部于期末向跑腿公司开票索赔。
                 </div>
               </Label>
             </div>
