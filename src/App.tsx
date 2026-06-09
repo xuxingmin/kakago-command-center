@@ -23,6 +23,9 @@ import Marketing from "./pages/Marketing";
 import Finance from "./pages/Finance";
 import OrderCenter from "./pages/OrderCenter";
 import SettingsPage from "./pages/SettingsPage";
+import AfterSales from "./pages/AfterSales";
+import AfterSalesReview from "./pages/AfterSalesReview";
+import AfterSalesAppeal from "./pages/AfterSalesAppeal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
