@@ -7,6 +7,7 @@ import {
   Box,
   Wallet,
   Settings,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -22,6 +23,7 @@ const menuItems = [
   { path: "/merchants", label: "商家中心", icon: Store },
   { path: "/marketing", label: "营销中心", icon: Megaphone },
   { path: "/supply", label: "供应链", icon: Box },
+  { path: "/aftersales", label: "售后与客诉", icon: LifeBuoy, matchPrefix: true },
   { path: "/finance", label: "财务", icon: Wallet },
   { path: "/settings", label: "设置", icon: Settings },
 ];
