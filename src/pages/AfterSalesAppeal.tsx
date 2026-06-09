@@ -114,8 +114,11 @@ export default function AfterSalesAppeal() {
 
   return (
     <div className="space-y-4">
+      <div className="rounded border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-[11px] text-yellow-200 leading-relaxed">
+        ⏰ 收付通账期锁死挂账机制：处于「48 小时申诉中」或「待总部二审裁决」的客诉单，在周期结算日到来时，系统自动执行「结算挂账锁死」——对应的微信收付通分账指令（Profit Sharing API）暂停下发，资金继续挂账冻结，直至二审运营结案后方可释放，防止因审核延迟导致线上账目与微信真实资金流断裂。
+      </div>
       <div className="rounded border border-purple-500/30 bg-purple-500/5 px-3 py-2 text-[11px] text-purple-200 leading-relaxed">
-        发票记账分流规则：普通单与门店责任罚款单，供应链发票自动开具给【门店商户】；凡标记为 <b>平台兜底</b> 或 <b>用户0元单（总部收付通充值/补差垫资单）</b> 的物料消耗，系统在供应链记账模块单独打包生成《总部营销赠饮原物料账单》，发票由供应链直接开具给【总部公司】（类目：营销促销商品），规避票款不一致风险。
+        发票记账分流规则：普通单与门店责任罚款单，供应链发票自动开具给【门店商户】；凡标记为 <b>平台兜底</b> 或 <b>消费者商品实付 &lt; 刚性总成本的[总部收付通补差垫资单]（含 0/1/2/3 元单）</b> 的物料消耗，系统在供应链记账模块单独打包生成《总部营销赠饮原物料账单》，发票由供应链直接开具给【总部公司】（类目：营销促销商品），规避票款不一致与虚开发票风险。
       </div>
       <Card className="bg-[#121212] border-[#222] p-4">
         <div className="text-sm text-muted-foreground mb-3">
