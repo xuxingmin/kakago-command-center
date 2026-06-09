@@ -4,8 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImageOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
-type Verdict = "pending" | "upheld" | "overturned";
+type Verdict = "pending" | "upheld" | "overturned_logistics" | "overturned_platform";
 
 interface Appeal {
   id: string;
@@ -17,8 +27,25 @@ interface Appeal {
   merchantReason: string;
   merchantProof: string;
   verdict: Verdict;
-  verdictLabel?: string;
 }
+
+const verdictMeta: Record<
+  Exclude<Verdict, "pending">,
+  { label: string; className: string }
+> = {
+  upheld: {
+    label: "已维持原判 - 门店责任结案",
+    className: "bg-red-500/20 text-red-300 border-red-500/40",
+  },
+  overturned_logistics: {
+    label: "已改判 - 物流责任结案",
+    className: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+  },
+  overturned_platform: {
+    label: "已改判 - 平台兜底结案",
+    className: "bg-purple-500/20 text-purple-300 border-purple-500/40",
+  },
+};
 
 const initial: Appeal[] = [
   {
@@ -43,36 +70,46 @@ const initial: Appeal[] = [
     merchantReason:
       "出餐前杯口已二次封膜，监控显示骑手取餐后倒置放置外卖箱，造成密封失效。",
     merchantProof: "出餐封膜与骑手装箱监控.jpg",
-    verdict: "overturned",
-    verdictLabel: "已改判 - 物流责任结案",
+    verdict: "overturned_logistics",
   },
 ];
 
 export default function AfterSalesAppeal() {
   const [list, setList] = useState<Appeal[]>(initial);
+  const [overturnTarget, setOverturnTarget] = useState<Appeal | null>(null);
+  const [overturnKind, setOverturnKind] = useState<
+    "overturned_logistics" | "overturned_platform" | ""
+  >("");
 
-  const decide = (id: string, kind: "uphold" | "overturn") => {
+  const uphold = (id: string) => {
+    setList((arr) =>
+      arr.map((a) => (a.id === id ? { ...a, verdict: "upheld" } : a))
+    );
+    toast({
+      title: "已维持原判",
+      description: "扣款已在期末账单生效，单据归档。",
+    });
+  };
+
+  const confirmOverturn = () => {
+    if (!overturnTarget || !overturnKind) {
+      toast({ title: "请选择改判财务分流", variant: "destructive" });
+      return;
+    }
     setList((arr) =>
       arr.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              verdict: kind === "uphold" ? "upheld" : "overturned",
-              verdictLabel:
-                kind === "uphold"
-                  ? "维持原判 - 门店责任结案"
-                  : "已改判 - 物流责任/平台兜底结案",
-            }
-          : a
+        a.id === overturnTarget.id ? { ...a, verdict: overturnKind } : a
       )
     );
     toast({
-      title: kind === "uphold" ? "已维持原判" : "已改判",
+      title: "已改判",
       description:
-        kind === "uphold"
-          ? "扣款已在期末账单生效，单据归档。"
-          : "已释放制作费用，账单中物料费与二次配送费划扣记录已抹除。",
+        overturnKind === "overturned_logistics"
+          ? "重新释放 5元制作费，整笔费用变更为「外部跑腿平台应收索赔账目」。"
+          : "重新释放 5元制作费，损失变更为「总部大盘营销/客情损耗」。",
     });
+    setOverturnTarget(null);
+    setOverturnKind("");
   };
 
   return (
@@ -85,6 +122,9 @@ export default function AfterSalesAppeal() {
         <div className="space-y-4">
           {list.map((a) => {
             const settled = a.verdict !== "pending";
+            const meta = settled
+              ? verdictMeta[a.verdict as Exclude<Verdict, "pending">]
+              : null;
             return (
               <div
                 key={a.id}
@@ -99,16 +139,9 @@ export default function AfterSalesAppeal() {
                       {a.store}
                     </span>
                   </div>
-                  {settled ? (
-                    <Badge
-                      variant="outline"
-                      className={
-                        a.verdict === "overturned"
-                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                          : "bg-red-500/20 text-red-300 border-red-500/40"
-                      }
-                    >
-                      {a.verdictLabel}
+                  {meta ? (
+                    <Badge variant="outline" className={meta.className}>
+                      {meta.label}
                     </Badge>
                   ) : (
                     <Badge
@@ -121,7 +154,6 @@ export default function AfterSalesAppeal() {
                 </div>
 
                 <div className="grid grid-cols-2 divide-x divide-[#222]">
-                  {/* User side */}
                   <div className="p-4 space-y-3">
                     <div className="text-xs font-semibold text-blue-300">
                       用户客诉（左）
@@ -139,7 +171,6 @@ export default function AfterSalesAppeal() {
                     </div>
                   </div>
 
-                  {/* Merchant side */}
                   <div className="p-4 space-y-3">
                     <div className="text-xs font-semibold text-purple-300">
                       商家申诉（右）
@@ -165,16 +196,19 @@ export default function AfterSalesAppeal() {
                     variant="destructive"
                     size="sm"
                     disabled={settled}
-                    onClick={() => decide(a.id, "uphold")}
+                    onClick={() => uphold(a.id)}
                   >
                     维持原判 - 确认扣款
                   </Button>
                   <Button
                     size="sm"
                     disabled={settled}
-                    onClick={() => decide(a.id, "overturn")}
+                    onClick={() => {
+                      setOverturnTarget(a);
+                      setOverturnKind("");
+                    }}
                   >
-                    改判为物流责任 / 平台兜底
+                    同意商家申诉并改判
                   </Button>
                 </div>
               </div>
@@ -182,6 +216,62 @@ export default function AfterSalesAppeal() {
           })}
         </div>
       </Card>
+
+      <Dialog
+        open={!!overturnTarget}
+        onOpenChange={(o) => !o && setOverturnTarget(null)}
+      >
+        <DialogContent className="max-w-lg bg-[#121212] border-[#222]">
+          <DialogHeader>
+            <DialogTitle>
+              改判财务分流 · {overturnTarget?.orderNo}
+            </DialogTitle>
+            <DialogDescription>
+              请精确选择费用归类，用于期末对账跑批（二选一必选）。
+            </DialogDescription>
+          </DialogHeader>
+
+          <RadioGroup
+            value={overturnKind}
+            onValueChange={(v) => setOverturnKind(v as any)}
+            className="space-y-2"
+          >
+            <div className="flex items-start gap-2 p-3 rounded border border-[#222] hover:border-primary/40">
+              <RadioGroupItem
+                value="overturned_logistics"
+                id="ov-1"
+                className="mt-1"
+              />
+              <Label htmlFor="ov-1" className="font-normal flex-1 cursor-pointer">
+                <div className="font-medium">改判为物流责任结案</div>
+                <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  撤销对该加盟店的扣款处罚。系统在期末结算单中重新释放并计发商家该单的 5元制作费，抹除划扣记录；同时将该整笔费用标签变更为「外部跑腿平台应收索赔账目」。
+                </div>
+              </Label>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded border border-[#222] hover:border-primary/40">
+              <RadioGroupItem
+                value="overturned_platform"
+                id="ov-2"
+                className="mt-1"
+              />
+              <Label htmlFor="ov-2" className="font-normal flex-1 cursor-pointer">
+                <div className="font-medium">改判为平台兜底结案</div>
+                <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  撤销对该加盟店的扣款处罚。重新释放并计发商家该单的 5元制作费；系统自动将这整笔损失标签变更为「总部大盘营销/客情损耗」，由总部利润对账承担。
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOverturnTarget(null)}>
+              取消
+            </Button>
+            <Button onClick={confirmOverturn}>确认改判</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
