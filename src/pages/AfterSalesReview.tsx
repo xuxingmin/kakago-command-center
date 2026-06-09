@@ -116,7 +116,7 @@ const reissueOptions: {
   {
     value: "store",
     title: "门店责任",
-    desc: "打上门店责任标签。该补发单不计入商家的出餐制作费用，系统向商家端同步下发扣款通知，并触发 48 小时申诉倒计时。",
+    desc: "打上门店责任标签。补发新单在收付通里不触发总部垫资，商家该新单制作费记为 0 元（义务劳动）；补发所消耗的物料供价及新配送费全额记为该门店对总部的账期负债。系统向商家端同步下发扣款通知，并触发 48 小时申诉倒计时。",
   },
 ];
 
@@ -159,14 +159,18 @@ const lifecycleMock = {
     { icon: Flag, label: "配送完成", time: "2026-06-08 15:28:45", color: "text-green-300" },
   ],
   finance: {
-    userPaid: 0,
-    isMarketingPrepaid: true,
+    userPaid: 3,
+    rigidCost: 10.6, // 5元制作费 + 5.6元物料供价
     merchantFee: 5,
     supplyShare: "5.6元（物料 5.3 + 配送服务费 0.3）",
-    hqRetain: "0元（全额营销垫资）",
     realDelivery: 5.5,
   },
 };
+
+const prepaid =
+  lifecycleMock.finance.rigidCost > lifecycleMock.finance.userPaid
+    ? +(lifecycleMock.finance.rigidCost - lifecycleMock.finance.userPaid).toFixed(2)
+    : 0;
 
 export default function AfterSalesReview() {
   const [tickets, setTickets] = useState<Ticket[]>(initial);
@@ -560,37 +564,32 @@ export default function AfterSalesReview() {
                     ¥{lifecycleMock.finance.userPaid.toFixed(2)}
                   </span>
                 </div>
-                {lifecycleMock.finance.isMarketingPrepaid && (
-                  <div className="text-[11px] text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1">
-                    总部全额营销垫资单
+                {prepaid > 0 && (
+                  <div className="text-[11px] text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1 leading-relaxed">
+                    总部收付通补差垫资单 · 总部已垫资：¥{prepaid.toFixed(2)}（刚性总成本 ¥{lifecycleMock.finance.rigidCost.toFixed(2)} - 消费者商品实付 ¥{lifecycleMock.finance.userPaid.toFixed(2)}）
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">商家制作费</span>
+                  <span className="text-muted-foreground">商家当期应记制作费</span>
                   <span className="tabular-nums">
                     ¥{lifecycleMock.finance.merchantFee.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">供应链账期分成</span>
+                  <span className="text-muted-foreground">供应链原物料账期分成</span>
                   <span className="tabular-nums">
                     {lifecycleMock.finance.supplyShare}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">总部留存</span>
-                  <span className="tabular-nums">
-                    {lifecycleMock.finance.hqRetain}
-                  </span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    实付跑腿平台配送费
+                    总部实付跑腿平台配送费
                   </span>
                   <span className="tabular-nums">
                     ¥{lifecycleMock.finance.realDelivery.toFixed(2)}
                   </span>
                 </div>
+
               </div>
             </section>
           </div>
