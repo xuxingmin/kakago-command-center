@@ -105,8 +105,8 @@ export default function AfterSalesAppeal() {
       title: "已改判",
       description:
         overturnKind === "overturned_logistics"
-          ? "重新释放 5元制作费，整笔费用变更为「外部跑腿平台应收索赔账目」。"
-          : "重新释放 5元制作费，损失变更为「总部大盘营销/客情损耗」。",
+          ? "已重新释放 5元制作费与物料费，整笔费用变更为「外部跑腿平台应收索赔账目」，由总部于期末向跑腿公司开票索赔。"
+          : "已重新释放 5元制作费与物料费，损失变更为「总部大盘营销/客情损耗」，由总部利润对账承担。",
     });
     setOverturnTarget(null);
     setOverturnKind("");
@@ -114,6 +114,9 @@ export default function AfterSalesAppeal() {
 
   return (
     <div className="space-y-4">
+      <div className="rounded border border-purple-500/30 bg-purple-500/5 px-3 py-2 text-[11px] text-purple-200 leading-relaxed">
+        发票记账分流规则：普通单与门店责任罚款单，供应链发票自动开具给【门店商户】；凡标记为 <b>平台兜底</b> 或 <b>用户0元单（总部收付通充值/补差垫资单）</b> 的物料消耗，系统在供应链记账模块单独打包生成《总部营销赠饮原物料账单》，发票由供应链直接开具给【总部公司】（类目：营销促销商品），规避票款不一致风险。
+      </div>
       <Card className="bg-[#121212] border-[#222] p-4">
         <div className="text-sm text-muted-foreground mb-3">
           双向对账看板 · 加盟商 48 小时申诉复核
@@ -245,7 +248,7 @@ export default function AfterSalesAppeal() {
               <Label htmlFor="ov-1" className="font-normal flex-1 cursor-pointer">
                 <div className="font-medium">改判为物流责任结案</div>
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  撤销对该加盟店的扣款处罚。系统在期末结算单中重新释放并计发商家该单的 5元制作费，抹除划扣记录；同时将该整笔费用标签变更为「外部跑腿平台应收索赔账目」。
+                  撤销对该加盟店的扣款处罚。系统在期末结算单中重新释放并计发商家该单的 5元制作费与物料费，抹除门店账中的划扣罚款记录；同时将该整笔费用标签变更为「外部跑腿平台应收索赔账目」，由总部于期末向跑腿公司开票索赔。
                 </div>
               </Label>
             </div>
@@ -258,7 +261,7 @@ export default function AfterSalesAppeal() {
               <Label htmlFor="ov-2" className="font-normal flex-1 cursor-pointer">
                 <div className="font-medium">改判为平台兜底结案</div>
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  撤销对该加盟店的扣款处罚。重新释放并计发商家该单的 5元制作费；系统自动将这整笔损失标签变更为「总部大盘营销/客情损耗」，由总部利润对账承担。
+                  撤销对该加盟店的扣款处罚。重新释放并计发商家该单的 5元制作费与物料费；系统自动将这整笔损失标签变更为「总部大盘营销/客情损耗」，由总部利润对账承担。
                 </div>
               </Label>
             </div>
