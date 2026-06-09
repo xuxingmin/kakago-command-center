@@ -159,14 +159,18 @@ const lifecycleMock = {
     { icon: Flag, label: "配送完成", time: "2026-06-08 15:28:45", color: "text-green-300" },
   ],
   finance: {
-    userPaid: 0,
-    isMarketingPrepaid: true,
+    userPaid: 3,
+    rigidCost: 10.6, // 5元制作费 + 5.6元物料供价
     merchantFee: 5,
     supplyShare: "5.6元（物料 5.3 + 配送服务费 0.3）",
-    hqRetain: "0元（全额营销垫资）",
     realDelivery: 5.5,
   },
 };
+
+const prepaid =
+  lifecycleMock.finance.rigidCost > lifecycleMock.finance.userPaid
+    ? +(lifecycleMock.finance.rigidCost - lifecycleMock.finance.userPaid).toFixed(2)
+    : 0;
 
 export default function AfterSalesReview() {
   const [tickets, setTickets] = useState<Ticket[]>(initial);
