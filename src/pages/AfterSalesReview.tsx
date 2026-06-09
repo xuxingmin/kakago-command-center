@@ -564,37 +564,32 @@ export default function AfterSalesReview() {
                     ¥{lifecycleMock.finance.userPaid.toFixed(2)}
                   </span>
                 </div>
-                {lifecycleMock.finance.isMarketingPrepaid && (
-                  <div className="text-[11px] text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1">
-                    总部全额营销垫资单
+                {prepaid > 0 && (
+                  <div className="text-[11px] text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1 leading-relaxed">
+                    总部收付通补差垫资单 · 总部已垫资：¥{prepaid.toFixed(2)}（刚性总成本 ¥{lifecycleMock.finance.rigidCost.toFixed(2)} - 消费者商品实付 ¥{lifecycleMock.finance.userPaid.toFixed(2)}）
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">商家制作费</span>
+                  <span className="text-muted-foreground">商家当期应记制作费</span>
                   <span className="tabular-nums">
                     ¥{lifecycleMock.finance.merchantFee.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">供应链账期分成</span>
+                  <span className="text-muted-foreground">供应链原物料账期分成</span>
                   <span className="tabular-nums">
                     {lifecycleMock.finance.supplyShare}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">总部留存</span>
-                  <span className="tabular-nums">
-                    {lifecycleMock.finance.hqRetain}
-                  </span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    实付跑腿平台配送费
+                    总部实付跑腿平台配送费
                   </span>
                   <span className="tabular-nums">
                     ¥{lifecycleMock.finance.realDelivery.toFixed(2)}
                   </span>
                 </div>
+
               </div>
             </section>
           </div>
