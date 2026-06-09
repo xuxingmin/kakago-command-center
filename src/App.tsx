@@ -151,6 +151,18 @@ const App = () => (
             }
           />
           <Route
+            path="/aftersales"
+            element={
+              <CommandLayout>
+                <AfterSales />
+              </CommandLayout>
+            }
+          >
+            <Route index element={<AfterSalesReview />} />
+            <Route path="review" element={<AfterSalesReview />} />
+            <Route path="appeal" element={<AfterSalesAppeal />} />
+          </Route>
+          <Route
             path="/settings"
             element={
               <CommandLayout>
