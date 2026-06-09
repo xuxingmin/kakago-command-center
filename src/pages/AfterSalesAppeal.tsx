@@ -258,7 +258,7 @@ export default function AfterSalesAppeal() {
               <Label htmlFor="ov-2" className="font-normal flex-1 cursor-pointer">
                 <div className="font-medium">改判为平台兜底结案</div>
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  撤销对该加盟店的扣款处罚。重新释放并计发商家该单的 5元制作费；系统自动将这整笔损失标签变更为「总部大盘营销/客情损耗」，由总部利润对账承担。
+                  撤销对该加盟店的扣款处罚。重新释放并计发商家该单的 5元制作费与物料费；系统自动将这整笔损失标签变更为「总部大盘营销/客情损耗」，由总部利润对账承担。
                 </div>
               </Label>
             </div>
